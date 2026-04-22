@@ -52,7 +52,7 @@ join_bef
     ;
 
 groupby_stm
-    : GROUP BY (column (COMMA column)* | logic_form)
+    : GROUP BY column (COMMA column)*
     ;
 
 logic_form
