@@ -82,11 +82,11 @@ logic_cmp
     ;
 
 logic_simple_cmp
-    : item NOT? (EGREATER | ELESS | NEQL | GREATER | LESS | EQL) item
+    : item_form NOT? (EGREATER | ELESS | NEQL | GREATER | LESS | EQL) item_form
     ;
 
 logic_between_cmp
-    : item NOT? BETWEEN item AND item
+    : item_form NOT? BETWEEN item_form AND item_form
     ;
 
 logic_like_cmp
@@ -97,8 +97,20 @@ logic_null_cmp
     : column IS NOT? NULL
     ;
 
+item_form
+    : item_atom (math_opr item_atom)*
+    ;
+
+item_atom
+    : MINUS? item | LBRACKET item_form RBRACKET
+    ;
+
 item
     : (column | NUM | INT | STR | TRUE | FALSE | agg_func)
+    ;
+
+math_opr
+    : PLUS | MINUS | MULT | DIV
     ;
 
 order_stm
