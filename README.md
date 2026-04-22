@@ -77,10 +77,13 @@ Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#.
 |`select_stm`|Całe wyrażenie SELECT|`select a, b, c from tabela where a > b;`|
 |`select_cont`|Zawartość listy wybranych do wyświetlenia kolumn/wartości|`a, b, min(c)`|
 |`select_item`|Element z listy wybranych do wyświetlenia kolumn/wartości|`a`, `tabela.b`, `min(c)`|
+|`from_stm`|Wyrażenie FROM wraz z tablicą|`from tabela`|
 |`where_stm`|Wyrażenie WHERE wraz z formułą logiczną|`where a > b`, `where b = min(a) and c <= 7`|
 |`where_cont`|Formuły logiczne rozdzielone AND lub OR|`a > b`, `b = min(a) and c <= 7`|
 |`logic_form`|Formuła logiczna|`a > b`, `b = min(a)`, `c <= 7`|
 |`order_stm`|Wyrażenie ORDER BY wraz z listą kolumn i wyborem sortowania|`order by a, b`, `order by a desc`|
 |`order_list`|Jeden lub więcej kolumn według, których odbędzie się sortowanie|`a, b`, `a`|
+|`agg_func`|Funkcje agregujące|`min(a)`, `sum(b)`|
+
 
 ## Gramatyka formatu
