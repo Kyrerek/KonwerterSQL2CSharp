@@ -53,6 +53,7 @@ Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#.
 |`COUNT`|Słowo kluczowe "count()", ilość rekordów|`count`, `COUNT`|
 |`SUM`|Słowo kluczowe "sum()", suma wartości|`sum`, `SUM`|
 |`AVG`|Słowo kluczowe "avg()", średnia z wartości|`avg`, `AVG`|
+|`HAVING`|Słowo kluczowe "having"|`having`, `HAVING`|
 |`PLUS`|Znak dodawania |`+`|
 |`MINUS`|Znak odejmowania|`-`|
 |`MULT`|Znak mnożenia|`*`|
