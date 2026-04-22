@@ -82,7 +82,20 @@ Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#.
 |`agg_func`|Funkcje agregujące|`min(a)`, `sum(tabela.b)`|
 |`from_stm`|Wyrażenie FROM wraz z tabelą|`from tabela`|
 |`where_stm`|Wyrażenie WHERE wraz z formułą logiczną|`where a > b`, `where b = min(a) and c <= 7`|
-|`logic_form`|Formuła logiczna|`a > b`, `b = min(a)`, `c <= 7`|
+|`join_stm`|Wyrażenie JOIN z ewentualnym jego typem|`left join tabela2 on tabela.a=tabela2.b`, `join tabela2 on tabela.a = tabela2.a`|
+|`join_bef`|Różne typy JOIN'ów|`left inner`, `right`, `outer`|
+|`groupby_stm`|Wyrażenie GROUP BY wraz z listą kolumn|`group by a, b`, `group by c`|
+|`logic_form`|Formuła logiczna|`a > b and a < b`, `b = min(a) or c <> c`, `c <= 7`|
+|`logic_or`|Reguła do ewentualnego dodawania OR|`a=b or c < 4`|
+|`logic_and`|Reguła do ewentualnego dodawania AND|`6 <> a AND 7 < 10`|
+|`logic_not`|Reguła do ewentualnego dodawania NOT|`NOT a < 45`|
+|`logic_atom`|Pojedyncza część formuły logicznej, gdzie można dodać nawiasowanie|`a=b`, `(tabela.c < 200)`|
+|`logic_cmp`|Reguła do wyboru rodzaju porównywania|`a between 10 and 200`, `b is null`, `y<>x`|
+|`logic_simple_cmp`|Regyła do wyboru rodzaju prostego porównywania wartości|`a<>b`, `c<=10`|
+|`logic_between_cmp`|Wyrażenie BETWEEN|`a not BETWEEN tabela2.alfa and tabela3.beta`, `a between 10 and 200`|
+|`logic_like_cmp`|Wyrażenie LIKE|`a not like 'a%'`, `b like 'beta_'`|
+|`logic_null_cmp`|Reguła do porównywania wartości z nullem|`a is null`, `b is not null`|
+|`item`|Wartość lub kolumna do porównywania|`tabela.a`, `199`, `'apostol'`|
 |`order_stm`|Wyrażenie ORDER BY wraz z listą kolumn i wyborem sortowania|`order by a, b`, `order by a desc`|
 |`order_list`|Jedna lub więcej kolumn według, których odbędzie się sortowanie wraz z trybem sortowania|`a, b DESC`, `a`|
 |`order_item`|Kolumna i ewentualnie jej tryb sortowania|`a`, `b desc`|
