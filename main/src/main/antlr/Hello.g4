@@ -13,7 +13,7 @@ select_stm
     (where_stm)?
     (groupby_stm)?
     (order_stm)?
-    (having_stm)
+    (having_stm)?
     ;
 
 select_list
