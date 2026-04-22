@@ -4,6 +4,10 @@ grammar Hello;
 package antlr;
 }
 
+from_stm
+    : FROM ID
+    ;
+
 order_stm
     : ORDER BY order_list
     ;
