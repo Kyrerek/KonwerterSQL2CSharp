@@ -98,7 +98,15 @@ logic_null_cmp
     ;
 
 item_form
-    : item_atom (math_opr item_atom)*
+    : item_plus_munus
+    ;
+
+item_plus_munus
+    :   item_muli_div ((PLUS | MINUS) item_muli_div)*
+    ;
+
+item_muli_div
+    :   item_atom ((MULT | DIV) item_atom)*
     ;
 
 item_atom
@@ -107,10 +115,6 @@ item_atom
 
 item
     : (column | NUM | INT | STR | TRUE | FALSE | agg_func)
-    ;
-
-math_opr
-    : PLUS | MINUS | MULT | DIV
     ;
 
 order_stm
