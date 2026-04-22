@@ -6,12 +6,12 @@
 - erykleski@student.agh.edu.pl
 ## Założenia programu
 ### Ogólne cele programu
-Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#.
+Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#. Będą to zapytania z wykorzystaniem SELECT. Będzie można używać: JOIN, WHERE, funkcji agregujących, HAVING, ORDER, GROUP, aliasowania.
 ### Rodzaj translatora
 - Kompilator
 ### Planowany wynik działania programu
 - kompilator zapytań SQL do języka C#
-### Planowany język implementacji
+### Język implementacji
 - Java
 ### Generator parsera
 - ANTLR4
@@ -95,7 +95,10 @@ Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#.
 |`logic_between_cmp`|Wyrażenie BETWEEN|`a not BETWEEN tabela2.alfa and tabela3.beta`, `a between 10 and 200`|
 |`logic_like_cmp`|Wyrażenie LIKE|`a not like 'a%'`, `b like 'beta_'`|
 |`logic_null_cmp`|Reguła do porównywania wartości z nullem|`a is null`, `b is not null`|
+|`item_form`|Reguła do ewentualnego dodawania operacji matematycznych|`a+10`, `8*10+b`|
+|`item_atom`|Ewentualna negacja wartości lub dodanie nawiasowania dla operacji matematycznych|`-a*(10+b)`|
 |`item`|Wartość lub kolumna do porównywania|`tabela.a`, `199`, `'apostol'`|
+|`math_opr`|Znak operacji matematycznej|`+`, `/`|
 |`order_stm`|Wyrażenie ORDER BY wraz z listą kolumn i wyborem sortowania|`order by a, b`, `order by a desc`|
 |`order_list`|Jedna lub więcej kolumn według, których odbędzie się sortowanie wraz z trybem sortowania|`a, b DESC`, `a`|
 |`order_item`|Kolumna i ewentualnie jej tryb sortowania|`a`, `b desc`|
@@ -103,3 +106,4 @@ Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#.
 
 
 ## Gramatyka formatu
+[GRAMATYKA](https://github.com/Kyrerek/KonwerterSQL2CSharp/blob/1b3401774426eae802235c4ed13884ca22158207/main/src/main/antlr/Hello.g4)
