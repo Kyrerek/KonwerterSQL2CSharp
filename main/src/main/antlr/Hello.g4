@@ -4,12 +4,6 @@ grammar Hello;
 package antlr;
 }
 
-query : select_stm END;
-
-select_stm
-    :
-    ;
-
 order_list
     : order_item (',' order_item)*
     ;
@@ -19,39 +13,39 @@ order_item
     ;
 
 NUM: [0-9]+ '.' [0-9]+;
-INT: [0-9]+;
+INT: [0-9];
 STR: '\'' (~['\r\n])* '\'' ;
 ID : [a-zA-Z_] [a-zA-Z0-9_]* ;
-TRUE: [tT][rR][uU][eE];
-FALSE:[fF][aA][lL][sS][eE];
-NULL: [nN][uU][lL][lL];
-SELECT: [sS][eE][lL][eE][cC][tT];
-FROM: [fF][rR][oO][mM];
-AS: [aA][sS];
-JOIN: [jJ][oO][iI][nN];
-INNER: [iI][nN][nN][eE][rR];
-OUTER: [oO][uU][tT][eE][rR];
-LEFT: [lL][eE][fF][tT];
-RIGHT: [rR][iI][gG][hH][tT];
-ON: [oO][nN];
-WHERE: [wW][hH][eE][rR][eE];
-AND: [aA][nN][dD];
-OR: [oO][rR];
-NOT: [nN][oO][tT];
-LIKE: [lL][iI][kK][eE];
-IS: [iI][sS];
-BETWEEN: [bB][eE][tT][wW][eE][eE][nN];
-ORDER: [oO][rR][dD][eE][rR];
-BY: [bB][yY];
-ASC: [aA][sS][cC];
-DESC: [dD][eE][sS][cC];
-GROUP: [gG][rR][oO][uU][pP];
-MIN: [mM][iI][nN];
-MAX: [mM][aA][xX];
-COUNT: [cC][oO][uU][nN][tT];
-SUM: [sS][uU][mM];
-AVG: [aA][vV][gG];
-HAVING: [hH][aA][vV][iI][nN][gG];
+TRUE: 'true' | 'True';
+FALSE: 'false' | 'False';
+NULL: 'null' | 'NULL';
+SELECT: 'select' | 'SELECT';
+FROM: 'from' | 'FROM';
+AS: 'as' | 'AS';
+JOIN: 'join' | 'JOIN';
+INNER: 'inner' | 'INNER';
+OUTER: 'outer' | 'OUTER';
+LEFT: 'left' | 'LEFT';
+RIGHT: 'right' | 'RIGHT';
+ON: 'on' | 'ON';
+WHERE: 'where' | 'WHERE';
+AND: 'and' | 'AND';
+OR: 'or' | 'OR';
+NOT: 'not' | 'NOT';
+LIKE: 'like' | 'LIKE';
+IS: 'is' | 'IS';
+BETWEEN: 'between' | 'BETWEEN';
+ORDER: 'order' | 'ORDER';
+BY: 'by' | 'BY';
+ASC: 'asc' | 'ASC';
+DESC: 'desc' | 'DESC';
+GROUP: 'group' | 'GROUP';
+MIN: 'min()' | 'MIN()';
+MAX: 'max()' | 'MAX()';
+COUNT: 'count()' | 'COUNT()';
+SUM: 'sum()' | 'SUM()';
+AVG: 'avg()' | 'AVG()';
+HAVING: 'having' | 'HAVING';
 PLUS: '+';
 MINUS: '-';
 MULT: '*';
@@ -59,7 +53,7 @@ DIV: '//';
 GREATER: '>';
 LESS: '<';
 EGREATER: '>=';
-ELESS: '<=';
+ELESS: '=<';
 EQL: '=';
 NEQL: '<>';
 LBRACKET: '(';
