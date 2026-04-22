@@ -10,6 +10,14 @@ select_stm
     :
     ;
 
+from_stm
+    : FROM ID
+    ;
+
+order_stm
+    : ORDER BY order_list
+    ;
+
 order_list
     : order_item (',' order_item)*
     ;
