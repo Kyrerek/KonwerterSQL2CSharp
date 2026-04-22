@@ -41,6 +41,13 @@ from_stm
     : FROM ID
     ;
 
+logic_form
+    : item (EGREATER | ELESS | NEQL | GREATER | LESS | EQL) item
+    ;
+item
+    : (ID | NUM | INT | STR | agg_func)
+    ;
+
 order_stm
     : ORDER BY order_list
     ;
@@ -95,12 +102,12 @@ PLUS: '+';
 MINUS: '-';
 MULT: '*';
 DIV: '//';
-GREATER: '>';
-LESS: '<';
 EGREATER: '>=';
 ELESS: '<=';
-EQL: '=';
 NEQL: '<>';
+GREATER: '>';
+LESS: '<';
+EQL: '=';
 LBRACKET: '(';
 RBRACKET: ')';
 COMMA: ',';
