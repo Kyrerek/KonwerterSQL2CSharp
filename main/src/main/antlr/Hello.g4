@@ -13,21 +13,29 @@ select_stm
     (where_stm)?
     (groupby_stm)?
     (order_stm)?
+    (having_stm)
     ;
 
 select_list
     : MULT |
-    select_item (COMMA select_item)
+    select_item (COMMA select_item)*
     ;
 
 select_item
-    : ((ID PER)? ID | agg_func) (AS ID)?
+    : (column | agg_func) (AS ID)?
+    ;
+
+column
+    : (ID PER)? ID
     ;
 
 agg_func
-    : (MIN | MAX | COUNT | SUM | AVG) LBRACKET (MULT | (ID PER)? ID) RBRACKET
+    : (MIN | MAX | COUNT | SUM | AVG) LBRACKET (MULT | column) RBRACKET
     ;
 
+where_stm
+    : WHERE logic_form
+    ;
 
 from_stm
     : FROM ID
@@ -42,7 +50,11 @@ order_list
     ;
 
 order_item
-    : ID (ASC | DESC)?
+    : column (ASC | DESC)?
+    ;
+
+having_stm
+    : HAVING logic_form
     ;
 
 NUM: [0-9]+ '.' [0-9]+;
