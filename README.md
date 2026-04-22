@@ -27,6 +27,7 @@ Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#.
 |`FALSE`|Wartość logiczna dla fałszu|`false`, `FALSE`|
 |`NULL`|Nienznana lub brakująca wartość|`null`, `NULL`|
 |`SELECT`|Słowo kluczowe "select"|`select`, `SELECT`|
+|`STAR`|Znak "*", występujący w klauzuli "select", oznaczjący całą zawartość danej tabeli|`*`|
 |`FROM`|Słowo kluczowe "from"|`from`, `FROM`|
 |`AS`|Słowo kluczowe "as", aliasowanie nazw|`as`, `AS`|
 |`JOIN`|Słowo kluczowe "join"|`join`, `JOIN`|
@@ -47,11 +48,11 @@ Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#.
 |`ASC`|Słowo kluczowe "asc", sortowanie rosnące, używane po "order by"|`asc`, `ASC`|
 |`DESC`|Słowo kluczowe "desc", sortowanie malejące, używane po "order by"|`desc`,`DESC`|
 |`GROUP`|Słowo kluczowe "group"|`group`, `GROUP`|
-|`MIN`|Słowo kluczowe "min()", najmniejsza wartość|`min()`, `MIN()`|
-|`MAX`|Słowo kluczowe "max()", maksymalna wartość|`max()`, `MAX()`|
-|`COUNT`|Słowo kluczowe "count()", ilość rekordów|`count()`, `COUNT()`|
-|`SUM`|Słowo kluczowe "sum()", suma wartości|`sum()`, `SUM()`|
-|`AVG`|Słowo kluczowe "avg()", średnia z wartości|`avg()`, `AVG()`|
+|`MIN`|Słowo kluczowe "min()", najmniejsza wartość|`min`, `MIN`|
+|`MAX`|Słowo kluczowe "max()", maksymalna wartość|`max`, `MAX`|
+|`COUNT`|Słowo kluczowe "count()", ilość rekordów|`count`, `COUNT`|
+|`SUM`|Słowo kluczowe "sum()", suma wartości|`sum`, `SUM`|
+|`AVG`|Słowo kluczowe "avg()", średnia z wartości|`avg`, `AVG`|
 |`PLUS`|Znak dodawania |`+`|
 |`MINUS`|Znak odejmowania|`-`|
 |`MULT`|Znak mnożenia|`*`|
@@ -67,6 +68,8 @@ Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#.
 |`COMMA`|Przecinek, używany do odzielenia np. nazw kolumn lub tabel|`,`|
 |`PER`|Kropka, separator używany do kwalifikowania nazw obiektów|`.`|
 |`END`|Średnik, oznaczenie końca kwerendy|`;`|
+|`WS`|Białe znaki|spacje, tabulacje, CF|
+|`ERR`|Nieznane znaki|`@`, `$`|
 ### Reguły parsera
 | Kod      | Opis                                |Przykłady|
 |:----------:|-------------------------------------|:---------:|
