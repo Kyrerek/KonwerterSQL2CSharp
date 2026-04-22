@@ -74,16 +74,19 @@ Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#.
 ### Reguły parsera
 | Kod      | Opis                                |Przykłady|
 |:----------:|-------------------------------------|:---------:|
-|`select_stm`|Całe wyrażenie SELECT|`select a, b, c from tabela where a > b;`|
-|`select_cont`|Zawartość listy wybranych do wyświetlenia kolumn/wartości|`a, b, min(c)`|
+|`query`|Cała kwerenda|`select a, tabela.b, c as d from tabela where a > b order by a;`|
+|`select_stm`|Wyrażenie SELECT|`select a, b, c from tabela where a > b;`|
+|`select_list`|Zawartość listy wybranych do wyświetlenia kolumn/wartości|`a, b, min(c)`|
 |`select_item`|Element z listy wybranych do wyświetlenia kolumn/wartości|`a`, `tabela.b`, `min(c)`|
-|`from_stm`|Wyrażenie FROM wraz z tablicą|`from tabela`|
+|`column`|Sama nazwa kolumny lub z odpowiadającą dla niej tabelą|`a`, `tabela.b`|
+|`agg_func`|Funkcje agregujące|`min(a)`, `sum(tabela.b)`|
+|`from_stm`|Wyrażenie FROM wraz z tabelą|`from tabela`|
 |`where_stm`|Wyrażenie WHERE wraz z formułą logiczną|`where a > b`, `where b = min(a) and c <= 7`|
-|`where_cont`|Formuły logiczne rozdzielone AND lub OR|`a > b`, `b = min(a) and c <= 7`|
 |`logic_form`|Formuła logiczna|`a > b`, `b = min(a)`, `c <= 7`|
 |`order_stm`|Wyrażenie ORDER BY wraz z listą kolumn i wyborem sortowania|`order by a, b`, `order by a desc`|
-|`order_list`|Jeden lub więcej kolumn według, których odbędzie się sortowanie|`a, b`, `a`|
-|`agg_func`|Funkcje agregujące|`min(a)`, `sum(b)`|
+|`order_list`|Jedna lub więcej kolumn według, których odbędzie się sortowanie wraz z trybem sortowania|`a, b DESC`, `a`|
+|`order_item`|Kolumna i ewentualnie jej tryb sortowania|`a`, `b desc`|
+|`having_stm`|Wyrażenie HAVING wraz z formułą logiczną|`having a=b and count(a)=max(b)`|
 
 
 ## Gramatyka formatu
