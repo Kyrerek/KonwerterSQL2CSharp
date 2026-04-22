@@ -41,11 +41,64 @@ from_stm
     : FROM ID
     ;
 
-logic_form
-    : item (EGREATER | ELESS | NEQL | GREATER | LESS | EQL) item
+join_stm
+    : join_bef? JOIN ID ON column EQL column
     ;
+
+join_bef
+    : (LEFT | RIGHT) (INNER | OUTER)
+    | (LEFT | RIGHT)
+    | (INNER | OUTER)
+    ;
+
+groupby_stm
+    : GROUP BY (column (COMMA column)* | logic_form)
+    ;
+
+logic_form
+    : logic_or
+    ;
+
+logic_or
+    : logic_and (OR logic_and)*
+    ;
+
+logic_and
+    : logic_not (AND logic_not)*
+    ;
+
+logic_not
+    : NOT logic_not
+    | logic_atom
+    ;
+
+logic_atom
+    : logic_cmp
+    | LBRACKET logic_form RBRACKET
+    ;
+
+logic_cmp
+    : logic_simple_cmp | logic_between_cmp | logic_like_cmp | logic_null_cmp
+    ;
+
+logic_simple_cmp
+    : item NOT? (EGREATER | ELESS | NEQL | GREATER | LESS | EQL) item
+    ;
+
+logic_between_cmp
+    : item NOT? BETWEEN item AND item
+    ;
+
+logic_like_cmp
+    : column NOT? LIKE (STR | ID)
+    ;
+
+logic_null_cmp
+    : ID IS NOT? NULL
+    ;
+
 item
-    : (ID | NUM | INT | STR | agg_func)
+    : (ID | NUM | INT | STR | TRUE | FALSE | agg_func)
     ;
 
 order_stm
