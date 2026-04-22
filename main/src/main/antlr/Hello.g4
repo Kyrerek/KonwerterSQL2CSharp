@@ -12,8 +12,8 @@ select_stm
     (join_stm)*
     (where_stm)?
     (groupby_stm)?
-    (order_stm)?
     (having_stm)?
+    (order_stm)?
     ;
 
 select_list
@@ -90,15 +90,15 @@ logic_between_cmp
     ;
 
 logic_like_cmp
-    : column NOT? LIKE (STR | ID)
+    : column NOT? LIKE STR
     ;
 
 logic_null_cmp
-    : ID IS NOT? NULL
+    : column IS NOT? NULL
     ;
 
 item
-    : (ID | NUM | INT | STR | TRUE | FALSE | agg_func)
+    : (column | NUM | INT | STR | TRUE | FALSE | agg_func)
     ;
 
 order_stm
@@ -154,7 +154,7 @@ HAVING: [hH][aA][vV][iI][nN][gG];
 PLUS: '+';
 MINUS: '-';
 MULT: '*';
-DIV: '//';
+DIV: '/';
 EGREATER: '>=';
 ELESS: '<=';
 NEQL: '<>';
