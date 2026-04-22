@@ -1,4 +1,4 @@
-grammar Hello;
+grammar SQL;
 
 @header {
 package antlr;
@@ -136,7 +136,6 @@ having_stm
 NUM: [0-9]+ '.' [0-9]+;
 INT: [0-9]+;
 STR: '\'' (~['\r\n])* '\'' ;
-ID : [a-zA-Z_] [a-zA-Z0-9_]* ;
 TRUE: [tT][rR][uU][eE];
 FALSE:[fF][aA][lL][sS][eE];
 NULL: [nN][uU][lL][lL];
@@ -167,6 +166,7 @@ COUNT: [cC][oO][uU][nN][tT];
 SUM: [sS][uU][mM];
 AVG: [aA][vV][gG];
 HAVING: [hH][aA][vV][iI][nN][gG];
+
 PLUS: '+';
 MINUS: '-';
 MULT: '*';
@@ -182,5 +182,7 @@ RBRACKET: ')';
 COMMA: ',';
 PER: '.';
 END: ';';
+
 WS : [ \t\r\n]+ -> skip ;
+ID : [a-zA-Z_] [a-zA-Z0-9_]* ;
 ERR: . ;
