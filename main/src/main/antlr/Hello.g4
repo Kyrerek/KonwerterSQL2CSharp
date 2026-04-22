@@ -7,8 +7,27 @@ package antlr;
 query : select_stm END;
 
 select_stm
-    :
+    : SELECT select_list
+    from_stm
+    (join_stm)*
+    (where_stm)?
+    (groupby_stm)?
+    (order_stm)?
     ;
+
+select_list
+    : MULT |
+    select_item (COMMA select_item)
+    ;
+
+select_item
+    : ((ID PER)? ID | agg_func) (AS ID)?
+    ;
+
+agg_func
+    : (MIN | MAX | COUNT | SUM | AVG) LBRACKET (MULT | (ID PER)? ID) RBRACKET
+    ;
+
 
 from_stm
     : FROM ID
