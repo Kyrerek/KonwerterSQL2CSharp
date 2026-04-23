@@ -98,14 +98,14 @@ logic_null_cmp
     ;
 
 item_form
-    : item_plus_munus
+    : item_plus_minus
     ;
 
-item_plus_munus
-    :   item_muli_div ((PLUS | MINUS) item_muli_div)*
+item_plus_minus
+    :   item_multi_div ((PLUS | MINUS) item_multi_div)*
     ;
 
-item_muli_div
+item_multi_div
     :   item_atom ((MULT | DIV) item_atom)*
     ;
 
