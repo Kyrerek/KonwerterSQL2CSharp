@@ -106,4 +106,4 @@ Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#. Będ�
 
 
 ## Gramatyka formatu
-[GRAMATYKA](https://github.com/Kyrerek/KonwerterSQL2CSharp/blob/1b3401774426eae802235c4ed13884ca22158207/main/src/main/antlr/Hello.g4)
+[GRAMATYKA](https://github.com/Kyrerek/KonwerterSQL2CSharp/blob/main/main/src/main/antlr/SQL.g4)
