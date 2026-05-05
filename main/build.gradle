@@ -15,10 +15,13 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     antlr "org.antlr:antlr4:4.13.1"
+    implementation "org.antlr:antlr4-runtime:4.13.1"
 }
 
 test {
     useJUnitPlatform()
 }
 
-compileJava.dependsOn generateGrammarSource // Generowanie Parsera i Lexera z gramatyki
+compileJava.dependsOn generateGrammarSource {
+    arguments += ["-visitor"]
+}

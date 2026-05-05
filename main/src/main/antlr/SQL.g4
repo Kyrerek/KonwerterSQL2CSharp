@@ -4,7 +4,7 @@ grammar SQL;
 package antlr;
 }
 
-query : select_stm END;
+query : select_stm END (select_stm END)*;
 
 select_stm
     : SELECT select_list
