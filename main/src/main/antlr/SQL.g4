@@ -82,7 +82,7 @@ logic_cmp
     ;
 
 logic_simple_cmp
-    : item_form NOT? (EGREATER | ELESS | NEQL | GREATER | LESS | EQL) item_form
+    : item_form (EGREATER | ELESS | NEQL | GREATER | LESS | EQL) item_form
     ;
 
 logic_between_cmp
