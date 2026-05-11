@@ -19,7 +19,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     @Override
     public String visitQuery(SQLParser.QueryContext ctx){
         StringBuilder csharp = new StringBuilder();
-        for (var query : ctx.select_stm()){
+        for (var query : ctx.operation()){
             csharp.append(visit(query)).append(";\n");
         }
         return csharp.toString();
@@ -60,6 +60,9 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         // SELECT
         csharp.append("\t\n.Select(temp => ").append(visit(ctx.select_list())).append(')');
 
+        // DISTINCT
+        if (ctx.DISTINCT() != null) csharp.append("\t\n.Distinct()");
+
         return csharp.toString();
     }
 
@@ -74,7 +77,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             csharp.append("new {");
             for (var col : cols) {
                 csharp.append(visit(col));
-                if (cols.indexOf(col) != cols.size() - 1) csharp.append(",\n");
+                if (cols.indexOf(col) != cols.size() - 1) csharp.append(", ");
             }
             csharp.append("}");
         }

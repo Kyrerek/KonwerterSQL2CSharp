@@ -18,7 +18,7 @@ public class Main {
 //        WHERE zamowienia.ilosc > 2 AND klientci.id BETWEEN 10 and 100
 //        ORDER BY klienci.nazwa DESC;
 //        """.trim();
-        String sqlStr = "SELECT name, age FROM users WHERE age > 18;";
+        String sqlStr = "SELECT DISTINCT name, age FROM users WHERE age > 18;";
         SQLLexer lexer = new SQLLexer(CharStreams.fromString(sqlStr));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SQLParser parser = new SQLParser(tokens);
