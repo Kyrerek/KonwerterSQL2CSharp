@@ -150,11 +150,7 @@ set_list
     ;
 
 set_item
-    : ID EQL value
-    ;
-
-value
-    : (MINUS)? INT | NUM | STR | TRUE | FALSE
+    : ID EQL (item_form | NULL)
     ;
 
 delete_stm
@@ -166,7 +162,7 @@ insert_stm
     ;
 
 into_stm
-    : ID (LBRACKET into_bracket_list RBRACKET)?
+    : INTO ID (LBRACKET into_bracket_list RBRACKET)?
     ;
 
 into_bracket_list
@@ -178,7 +174,7 @@ values_stm
     ;
 
 values_list
-    : values_item (COMMA values_item)
+    : values_item (COMMA values_item)*
     ;
 
 values_item
@@ -188,6 +184,15 @@ values_item
 values_item_list
     : value (COMMA value)*
     ;
+
+value
+    : (MINUS)? (INT | NUM)
+    | STR
+    | TRUE
+    | FALSE
+    | NULL
+    ;
+
 
 NUM: [0-9]+ '.' [0-9]+;
 INT: [0-9]+;
