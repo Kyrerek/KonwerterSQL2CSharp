@@ -7,7 +7,7 @@ package antlr;
 query : select_stm END (select_stm END)*;
 
 select_stm
-    : SELECT select_list
+    : SELECT (DISTINCT)? select_list
     from_stm
     (join_stm)*
     (where_stm)?
