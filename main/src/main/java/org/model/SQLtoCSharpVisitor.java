@@ -12,9 +12,8 @@ import java.util.List;
 import static antlr.SQLParser.*;
 
 public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
-    //TODO - raczej inaczej to trzeba dla wielu query
-    private boolean isGrouped = false;
-    private List<String> groupedColumns = new ArrayList<String>();
+    private boolean isGrouped;
+    private List<String> groupedColumns;
 
     @Override
     public String visitQuery(SQLParser.QueryContext ctx){
@@ -27,6 +26,8 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitSelect_stm(SQLParser.Select_stmContext ctx){
+        isGrouped = false;
+
         String tableName = visit(ctx.from_stm());
         StringBuilder csharp = new StringBuilder(tableName);
 
@@ -44,6 +45,8 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
         // GROUP BY
         if (ctx.groupby_stm() != null) {
+            isGrouped = true;
+            groupedColumns = new ArrayList<>();
             csharp.append("\n\t.GroupBy(temp => ").append(visit(ctx.groupby_stm())).append(')');
         }
 
@@ -52,16 +55,16 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             csharp.append("\n\t.Where(temp => ").append(visit(ctx.having_stm())).append(')');
         }
 
-        // ORDER BY
-        if (ctx.order_stm() != null) {
-            csharp.append(visit(ctx.order_stm()));
-        }
-
         // SELECT
         csharp.append("\n\t.Select(temp => ").append(visit(ctx.select_list())).append(')');
 
         // DISTINCT
         if (ctx.DISTINCT() != null) csharp.append("\n\t.Distinct()");
+
+        // ORDER BY
+        if (ctx.order_stm() != null) {
+            csharp.append(visit(ctx.order_stm()));
+        }
 
         return csharp.toString();
     }
@@ -90,12 +93,14 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
         if (ctx.AS() != null) csharp.append(ctx.ID().getText()).append(" = ");
 
-        //TODO - ma wykrywać, że kolumna jest zgrupowana
-        if (this.isGrouped) {
-            return csharp.append("temp.Key").toString();
+        if (ctx.column() != null) {
+            var col = visit(ctx.column());
+            if (isGrouped && groupedColumns.contains(col)) {
+                if (groupedColumns.size() == 1) return csharp.append("temp.Key").toString();
+                else return csharp.append("temp.Key.").append(col).toString();
+            }
+            csharp.append("temp.").append(col);
         }
-
-        if (ctx.column() != null) csharp.append(visit(ctx.column()));
         else if (ctx.agg_func() != null) csharp.append(visit(ctx.agg_func()));
 
         return csharp.toString();
@@ -105,23 +110,24 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     public String visitColumn(SQLParser.ColumnContext ctx){
         if (ctx.PER() != null){
             List<TerminalNode> ids = ctx.ID();
-            return "temp."+ids.get(0).getText()+'.'+ids.get(1).getText();
+            return ids.get(0).getText()+'.'+ids.get(1).getText();
         }
-        return "temp."+ctx.getText();
+        return ctx.getText();
     }
 
-    //TODO - obsługiwanie "*"
     @Override
     public String visitAgg_func(SQLParser.Agg_funcContext ctx){
-        if (ctx.MIN() != null) return "temp.Min(s => s."+visit(ctx.column())+")";
+        String col = ctx.column() != null ? visit(ctx.column()) : "";
 
-        if (ctx.MAX() != null) return "temp.Max(s => s."+visit(ctx.column())+")";
+        if (ctx.MIN() != null) return "temp.Min(s => s."+col+")";
+
+        if (ctx.MAX() != null) return "temp.Max(s => s."+col+")";
 
         if (ctx.COUNT() != null) return "temp.Count()";
 
-        if (ctx.SUM() != null) return "temp.Sum(s => s."+visit(ctx.column())+")";
+        if (ctx.SUM() != null) return "temp.Sum(s => s."+col+")";
 
-        if (ctx.AVG() != null) return "temp.Average(s => s."+visit(ctx.column())+")";
+        if (ctx.AVG() != null) return "temp.Average(s => s."+col+")";
 
         return null;
     }
@@ -137,6 +143,26 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         return ctx.ID().getText();
     }
 
+    @Override
+    public String visitGroupby_stm(SQLParser.Groupby_stmContext ctx){
+        StringBuilder csharp = new StringBuilder();
+
+        if (ctx.column().size() == 1) {
+            groupedColumns.add(visit(ctx.column().getFirst()));
+            csharp.append("temp.").append(visit(ctx.column().getFirst()));
+        }
+        else {
+            csharp.append("new {");
+            for (var col : ctx.column()) {
+                groupedColumns.add(visit(col));
+                csharp.append("temp.").append(visit(col));
+                if (ctx.column().indexOf(col) != ctx.column().size() - 1) csharp.append(", ");
+            }
+            csharp.append("}");
+        }
+
+        return csharp.toString();
+    }
 
     //Logic Form
     @Override
