@@ -39,17 +39,17 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
         // WHERE
         if (ctx.where_stm() != null){
-            csharp.append("\t\n.Where(temp => ").append(visit(ctx.where_stm())).append(')');
+            csharp.append("\n\t.Where(temp => ").append(visit(ctx.where_stm())).append(')');
         }
 
         // GROUP BY
         if (ctx.groupby_stm() != null) {
-            csharp.append("\t\n.GroupBy(temp => ").append(visit(ctx.groupby_stm())).append(')');
+            csharp.append("\n\t.GroupBy(temp => ").append(visit(ctx.groupby_stm())).append(')');
         }
 
         // HAVING
         if (ctx.having_stm() != null) {
-            csharp.append("\t\n.Where(temp => ").append(visit(ctx.having_stm())).append(')');
+            csharp.append("\n\t.Where(temp => ").append(visit(ctx.having_stm())).append(')');
         }
 
         // ORDER BY
@@ -58,10 +58,10 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         }
 
         // SELECT
-        csharp.append("\t\n.Select(temp => ").append(visit(ctx.select_list())).append(')');
+        csharp.append("\n\t.Select(temp => ").append(visit(ctx.select_list())).append(')');
 
         // DISTINCT
-        if (ctx.DISTINCT() != null) csharp.append("\t\n.Distinct()");
+        if (ctx.DISTINCT() != null) csharp.append("\n\t.Distinct()");
 
         return csharp.toString();
     }
