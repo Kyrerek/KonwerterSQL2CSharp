@@ -7,7 +7,7 @@ package antlr;
 query : operation END (operation END)*;
 
 operation
-    : select_stm | update_stm | delete_stm
+    : select_stm | update_stm | delete_stm | insert_stm
     ;
 
 select_stm
@@ -150,11 +150,43 @@ set_list
     ;
 
 set_item
-    : ID EQL (MINUS INT | INT | MINUS NUM | NUM | STR | TRUE | FALSE)
+    : ID EQL value
+    ;
+
+value
+    : (MINUS)? INT | NUM | STR | TRUE | FALSE
     ;
 
 delete_stm
     : DELETE from_stm (where_stm)?
+    ;
+
+insert_stm
+    : INSERT into_stm values_stm
+    ;
+
+into_stm
+    : ID (LBRACKET into_bracket_list RBRACKET)?
+    ;
+
+into_bracket_list
+    : ID (COMMA ID)*
+    ;
+
+values_stm
+    : VALUES values_list
+    ;
+
+values_list
+    : values_item (COMMA values_item)
+    ;
+
+values_item
+    : LBRACKET values_item_list RBRACKET
+    ;
+
+values_item_list
+    : value (COMMA value)*
     ;
 
 NUM: [0-9]+ '.' [0-9]+;
