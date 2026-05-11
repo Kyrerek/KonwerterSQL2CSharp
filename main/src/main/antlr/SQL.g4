@@ -4,7 +4,11 @@ grammar SQL;
 package antlr;
 }
 
-query : select_stm END (select_stm END)*;
+query : operation END (operation END)*;
+
+operation
+    : select_stm | update_stm
+    ;
 
 select_stm
     : SELECT (DISTINCT)? select_list
@@ -122,7 +126,7 @@ order_stm
     ;
 
 order_list
-    : order_item (',' order_item)*
+    : order_item (COMMA order_item)*
     ;
 
 order_item
@@ -131,6 +135,22 @@ order_item
 
 having_stm
     : HAVING logic_form
+    ;
+
+update_stm
+    : UPDATE ID set_stm (where_stm)?
+    ;
+
+set_stm
+    : SET set_list
+    ;
+
+set_list
+    : set_item (COMMA set_item)*
+    ;
+
+set_item
+    : ID EQL (MINUS INT | INT | MINUS NUM | NUM | STR | TRUE | FALSE)
     ;
 
 NUM: [0-9]+ '.' [0-9]+;
