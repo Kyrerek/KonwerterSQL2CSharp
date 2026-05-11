@@ -7,7 +7,7 @@ package antlr;
 query : operation END (operation END)*;
 
 operation
-    : select_stm | update_stm
+    : select_stm | update_stm | delete_stm
     ;
 
 select_stm
@@ -151,6 +151,10 @@ set_list
 
 set_item
     : ID EQL (MINUS INT | INT | MINUS NUM | NUM | STR | TRUE | FALSE)
+    ;
+
+delete_stm
+    : DELETE from_stm (where_stm)?
     ;
 
 NUM: [0-9]+ '.' [0-9]+;
