@@ -149,7 +149,6 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitJoin_stm(SQLParser.Join_stmContext ctx) {
-        StringBuilder csharp = new StringBuilder();
         JoinType joinType = detectJoinType(ctx.join_bef());
 
         String joinTable = ctx.ID().getFirst().getText();
@@ -185,29 +184,28 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         return param + " => new {" + String.join(", ", keys) + "}";
     }
 
-    private String buildInnerJoin(String joinTable, String joinName,
-                                  List<String> leftKeys, List<String> rightKeys) {
+    private String buildInnerJoin(String joinTable, String joinName, List<String> leftSide, List<String> rightSide) {
         return """
-                \n\t.Join(
+                
+                \t.Join(
                 \t\t%s,
                 \t\t%s,
                 \t\t%s,
                 \t\t(%s, %s) => new {%s, %s}
                 \t)""".formatted(
                 joinTable,
-                buildKeySelector(mainTable, leftKeys),
-                buildKeySelector(joinName, rightKeys),
+                buildKeySelector(mainTable, leftSide),
+                buildKeySelector(joinName, rightSide),
                 mainTable, joinName,
                 mainTable, joinName
         );
     }
 
-    private String buildGroupJoin(String joinTable, String joinName,
-                                  List<String> leftKeys, List<String> rightKeys,
-                                  String outerParam, String innerParam) {
+    private String buildGroupJoin(String joinTable, String joinName, List<String> leftSide, List<String> rightSide, String outerParam, String innerParam) {
         String groupName = joinName + "Group";
         return """
-                \n\t.GroupJoin(
+                
+                \t.GroupJoin(
                 \t\t%s,
                 \t\t%s,
                 \t\t%s,
@@ -218,8 +216,8 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 \t\t(%s, %s) => new {%s = %s.%s, %s}
                 \t)""".formatted(
                 joinTable,
-                buildKeySelector(outerParam, leftKeys),
-                buildKeySelector(innerParam, rightKeys),
+                buildKeySelector(outerParam, leftSide),
+                buildKeySelector(innerParam, rightSide),
                 outerParam, groupName, outerParam, groupName,
                 anonName, anonName, groupName,
                 anonName, joinName,
