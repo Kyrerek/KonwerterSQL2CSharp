@@ -46,13 +46,17 @@ from_stm
     ;
 
 join_stm
-    : join_bef? JOIN ID ON column EQL column
+    : join_bef? JOIN ID ON join_on (AND join_on)*
     ;
 
 join_bef
     : (LEFT | RIGHT) (INNER | OUTER)
     | (LEFT | RIGHT)
     | (INNER | OUTER)
+    ;
+
+join_on
+    : column EQL column
     ;
 
 groupby_stm
