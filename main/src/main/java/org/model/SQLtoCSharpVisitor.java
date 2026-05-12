@@ -14,6 +14,7 @@ import static antlr.SQLParser.*;
 public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     private boolean isGrouped;
     private List<String> groupedColumns;
+    private final String anonName = "temp";
 
     @Override
     public String visitQuery(SQLParser.QueryContext ctx){
@@ -24,18 +25,19 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         return csharp.toString();
     }
 
+    private String mainTable;
     @Override
     public String visitSelect_stm(SQLParser.Select_stmContext ctx){
         isGrouped = false;
 
-        String tableName = visit(ctx.from_stm());
-        StringBuilder csharp = new StringBuilder(tableName);
+        mainTable = visit(ctx.from_stm());
+        StringBuilder csharp = new StringBuilder(ctx.from_stm().ID().getFirst().getText());
 
         // JOIN
         if (ctx.join_stm() != null) {
             for (var join_stmContext : ctx.join_stm()) {
                 csharp.append(visit(join_stmContext));
-            };
+            }
         }
 
         // WHERE
@@ -71,7 +73,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitSelect_list(SQLParser.Select_listContext ctx){
-        if (ctx.MULT() != null) return "temp";
+        if (ctx.MULT() != null) return anonName;
 
         StringBuilder csharp = new StringBuilder();
         List<SQLParser.Select_itemContext> cols = ctx.select_item();
@@ -96,10 +98,10 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         if (ctx.column() != null) {
             var col = visit(ctx.column());
             if (isGrouped && groupedColumns.contains(col)) {
-                if (groupedColumns.size() == 1) return csharp.append("temp.Key").toString();
-                else return csharp.append("temp.Key.").append(col).toString();
+                if (groupedColumns.size() == 1) return csharp.append(anonName).append(".Key").toString();
+                else return csharp.append(anonName).append(".Key.").append(col).toString();
             }
-            csharp.append("temp.").append(col);
+            csharp.append(anonName).append('.').append(col);
         }
         else if (ctx.agg_func() != null) csharp.append(visit(ctx.agg_func()));
 
@@ -119,15 +121,15 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     public String visitAgg_func(SQLParser.Agg_funcContext ctx){
         String col = ctx.column() != null ? visit(ctx.column()) : "";
 
-        if (ctx.MIN() != null) return "temp.Min(s => s."+col+")";
+        if (ctx.MIN() != null) return anonName+".Min(s => s."+col+")";
 
-        if (ctx.MAX() != null) return "temp.Max(s => s."+col+")";
+        if (ctx.MAX() != null) return anonName+".Max(s => s."+col+")";
 
-        if (ctx.COUNT() != null) return "temp.Count()";
+        if (ctx.COUNT() != null) return anonName+".Count()";
 
-        if (ctx.SUM() != null) return "temp.Sum(s => s."+col+")";
+        if (ctx.SUM() != null) return anonName+".Sum(s => s."+col+")";
 
-        if (ctx.AVG() != null) return "temp.Average(s => s."+col+")";
+        if (ctx.AVG() != null) return anonName+".Average(s => s."+col+")";
 
         return null;
     }
@@ -140,7 +142,56 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitFrom_stm(SQLParser.From_stmContext ctx){
-        return ctx.ID().getText();
+        return ctx.ID().size() == 1 ? ctx.ID().getFirst().getText() : ctx.ID().get(1).getText();
+    }
+
+    private int joinType = 0;
+
+    @Override
+    public String visitJoin_stm(SQLParser.Join_stmContext ctx){
+        StringBuilder csharp = new StringBuilder();
+        String joinName = ctx.ID().size() == 1 ? ctx.ID().getFirst().getText() : ctx.ID().get(1).getText();
+
+        List<String> leftSide = new ArrayList<>();
+        List<String> rightSide = new ArrayList<>();
+        for (var on : ctx.join_on()){
+            leftSide.add(visit(on.column(0)));
+            rightSide.add(visit(on.column(1)));
+        }
+
+        if (ctx.join_bef() != null) visit(ctx.join_bef());
+
+        if (joinType == 0) {
+            csharp.append("\n\t.Join(\n\t\t")
+                    .append(ctx.ID().getFirst())
+                    .append(",\n\t\t");
+            if (ctx.join_on().size() == 1){
+                csharp.append(mainTable)
+                        .append(" => ")
+                        .append(leftSide.getFirst())
+                        .append(",\n\t\t")
+                        .append(joinName)
+                        .append(" => ")
+                        .append(rightSide.getFirst());
+            } else {
+                csharp.append(mainTable)
+                        .append(" => new {")
+                        .append(String.join(", ", leftSide))
+                        .append("},\n\t\t")
+                        .append(joinName)
+                        .append(" => new {")
+                        .append(String.join(", ", rightSide))
+                        .append("}");
+            }
+            csharp.append(",\n\t\t(")
+                    .append(mainTable).append(", ").append(joinName).append(") => new {")
+                    .append(mainTable).append(", ").append(joinName)
+                    .append("}\n\t)");
+        } else if (joinType == 1) {
+            csharp.append(".GroupJoin(");
+        }
+
+        return csharp.toString();
     }
 
     @Override
@@ -149,13 +200,13 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
         if (ctx.column().size() == 1) {
             groupedColumns.add(visit(ctx.column().getFirst()));
-            csharp.append("temp.").append(visit(ctx.column().getFirst()));
+            csharp.append(anonName).append('.').append(visit(ctx.column().getFirst()));
         }
         else {
             csharp.append("new {");
             for (var col : ctx.column()) {
                 groupedColumns.add(visit(col));
-                csharp.append("temp.").append(visit(col));
+                csharp.append(anonName).append('.').append(visit(col));
                 if (ctx.column().indexOf(col) != ctx.column().size() - 1) csharp.append(", ");
             }
             csharp.append("}");

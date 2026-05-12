@@ -42,17 +42,16 @@ where_stm
     ;
 
 from_stm
-    : FROM ID
+    : FROM ID (AS ID)?
     ;
 
 join_stm
-    : join_bef? JOIN ID ON join_on (AND join_on)*
+    : join_bef? JOIN ID (AS ID)? ON join_on (AND join_on)*
     ;
 
 join_bef
-    : (LEFT | RIGHT) (INNER | OUTER)
-    | (LEFT | RIGHT)
-    | (INNER | OUTER)
+    : (LEFT | RIGHT | FULL) (OUTER)?
+    | INNER
     ;
 
 join_on
@@ -213,6 +212,7 @@ INNER: [iI][nN][nN][eE][rR];
 OUTER: [oO][uU][tT][eE][rR];
 LEFT: [lL][eE][fF][tT];
 RIGHT: [rR][iI][gG][hH][tT];
+FULL: [fF][uU][lL][lL];
 ON: [oO][nN];
 WHERE: [wW][hH][eE][rR][eE];
 AND: [aA][nN][dD];

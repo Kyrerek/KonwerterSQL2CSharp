@@ -18,7 +18,11 @@ public class Main {
 //        WHERE zamowienia.ilosc > 2 AND klientci.id BETWEEN 10 and 100
 //        ORDER BY klienci.nazwa DESC;
 //        """.trim();
-        String sqlStr = "SELECT DISTINCT name, age FROM users WHERE age > 18; SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept;";
+        String sqlStr = """
+                SELECT DISTINCT name, age FROM users WHERE age > 18; 
+                SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept;
+                SELECT e.DeptId FROM Employees AS e JOIN Departments AS d ON e.DeptId = d.Id;
+                SELECT e.DeptId FROM Employees AS e JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;""";
         SQLLexer lexer = new SQLLexer(CharStreams.fromString(sqlStr));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SQLParser parser = new SQLParser(tokens);
