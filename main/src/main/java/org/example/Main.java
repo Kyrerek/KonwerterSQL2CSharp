@@ -22,7 +22,9 @@ public class Main {
                 SELECT DISTINCT name, age FROM users WHERE age > 18; 
                 SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept;
                 SELECT e.DeptId FROM Employees AS e JOIN Departments AS d ON e.DeptId = d.Id;
-                SELECT e.DeptId FROM Employees AS e LEFT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;""";
+                SELECT e.DeptId FROM Employees AS e LEFT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;
+                SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept ORDER BY average DESC, Dept;
+                """;
         SQLLexer lexer = new SQLLexer(CharStreams.fromString(sqlStr));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SQLParser parser = new SQLParser(tokens);

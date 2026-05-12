@@ -134,7 +134,6 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         return null;
     }
 
-    //TODO - zweryfikować, czy tyle starczy
     @Override
     public String visitWhere_stm(SQLParser.Where_stmContext ctx) {
         return visit(ctx.logic_form());
@@ -243,6 +242,37 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         }
 
         return csharp.toString();
+    }
+
+    private boolean firstOrder;
+    @Override
+    public String visitOrder_stm(SQLParser.Order_stmContext ctx){
+        firstOrder = true;
+        return visit(ctx.order_list());
+    }
+
+    @Override
+    public String visitOrder_list(SQLParser.Order_listContext ctx){
+        StringBuilder csharp = new StringBuilder();
+        for (var ord : ctx.order_item()){
+            csharp.append(visit(ord));
+        }
+        return csharp.toString();
+    }
+
+    @Override
+    public String visitOrder_item(SQLParser.Order_itemContext ctx){
+        if (firstOrder) {
+            firstOrder = false;
+            if (ctx.ASC() != null || ctx.getChildCount() == 1) {
+                return "\n\t.OrderBy("+anonName+" => "+anonName+'.'+visit(ctx.column())+')';
+            }
+            return "\n\t.OrderByDescending("+anonName+" => "+anonName+'.'+visit(ctx.column())+')';
+        }
+        if (ctx.ASC() != null || ctx.getChildCount() == 1){
+            return "\n\t.ThenBy("+anonName+" => "+anonName+'.'+visit(ctx.column())+')';
+        }
+        return "\n\t.ThenByDescending("+anonName+" => "+anonName+'.'+visit(ctx.column())+')';
     }
 
     //Logic Form
