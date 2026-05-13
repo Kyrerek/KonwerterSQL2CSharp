@@ -50,7 +50,7 @@ join_stm
     ;
 
 join_bef
-    : (LEFT | RIGHT | FULL) (OUTER)?
+    : (LEFT | RIGHT) (OUTER)?
     | INNER
     ;
 
@@ -212,7 +212,6 @@ INNER: [iI][nN][nN][eE][rR];
 OUTER: [oO][uU][tT][eE][rR];
 LEFT: [lL][eE][fF][tT];
 RIGHT: [rR][iI][gG][hH][tT];
-FULL: [fF][uU][lL][lL];
 ON: [oO][nN];
 WHERE: [wW][hH][eE][rR][eE];
 AND: [aA][nN][dD];

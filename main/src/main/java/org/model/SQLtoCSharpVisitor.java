@@ -17,6 +17,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     private boolean isGrouped;
     private List<String> groupedColumns;
     private final String anonName = "temp";
+    private int tablesToJoin;
 
     @Override
     public String visitQuery(SQLParser.QueryContext ctx) {
@@ -27,20 +28,24 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         return csharp.toString();
     }
 
+    private String mainName;
     private String mainTable;
 
     @Override
     public String visitSelect_stm(SQLParser.Select_stmContext ctx) {
         isGrouped = false;
 
-        mainTable = visit(ctx.from_stm());
-        StringBuilder csharp = new StringBuilder(ctx.from_stm().ID().getFirst().getText());
+        mainName = visit(ctx.from_stm());
+        mainTable = ctx.from_stm().ID().getFirst().getText();
+        StringBuilder csharp = new StringBuilder();
 
         // JOIN
-        if (ctx.join_stm() != null) {
+        if (!ctx.join_stm().isEmpty()) {
             for (var join_stmContext : ctx.join_stm()) {
                 csharp.append(visit(join_stmContext));
             }
+        } else{
+            csharp.append(mainTable);
         }
 
         // WHERE
@@ -146,7 +151,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         return ctx.ID().size() == 1 ? ctx.ID().getFirst().getText() : ctx.ID().get(1).getText();
     }
 
-    private enum JoinType {INNER, LEFT, RIGHT, FULL}
+    private enum JoinType {INNER, LEFT, RIGHT}
 
     @Override
     public String visitJoin_stm(SQLParser.Join_stmContext ctx) {
@@ -163,10 +168,9 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         }
 
         return switch (joinType) {
-            case INNER -> buildInnerJoin(joinTable, joinName, leftSide, rightSide);
-            case LEFT -> buildGroupJoin(joinTable, joinName, leftSide, rightSide, mainTable, joinName);
-            case RIGHT -> "";
-            case FULL -> "";
+            case INNER -> mainTable+buildInnerJoin(joinTable, joinName, leftSide, rightSide);
+            case LEFT -> mainTable+buildGroupJoin(joinTable, joinName, leftSide, rightSide, mainName, joinName);
+            case RIGHT -> joinTable+buildGroupJoin(mainTable, mainName, rightSide, leftSide, joinName, mainName);
         };
     }
 
@@ -195,10 +199,10 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 \t\t(%s, %s) => new {%s, %s}
                 \t)""".formatted(
                 joinTable,
-                buildKeySelector(mainTable, leftSide),
+                buildKeySelector(mainName, leftSide),
                 buildKeySelector(joinName, rightSide),
-                mainTable, joinName,
-                mainTable, joinName
+                mainName, joinName,
+                mainName, joinName
         );
     }
 
@@ -222,7 +226,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 outerParam, groupName, outerParam, groupName,
                 anonName, anonName, groupName,
                 anonName, joinName,
-                mainTable, anonName, mainTable, joinName
+                mainName, anonName, mainName, joinName
         );
     }
 
