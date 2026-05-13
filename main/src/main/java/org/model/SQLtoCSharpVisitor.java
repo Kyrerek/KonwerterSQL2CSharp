@@ -277,6 +277,18 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         return "\n\t.ThenByDescending("+anonName+" => "+anonName+'.'+visit(ctx.column())+')';
     }
 
+    @Override
+    public String visitDelete_stm(Delete_stmContext ctx) {
+        StringBuilder csharp = new StringBuilder(ctx.from_stm().ID().getFirst().getText());
+
+        if (ctx.getChildCount() == 3) {
+            csharp.append("\n\t.Where(temp => ").append(visit(ctx.where_stm())).append(')');
+        }
+
+        csharp.append("\n\t.ExecuteDelete()");
+        return csharp.toString();
+    }
+
     //Logic Form
     @Override
     public String visitLogic_form(SQLParser.Logic_formContext ctx) {
@@ -353,16 +365,8 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             str = ctx.getChild(3).getText();
         }
         str = csharpStr(str);
-        csharp.append("new");
-        csharp.append(" ");
-        csharp.append("Regex(");
-        csharp.append(regex(str));
-        csharp.append(")");
-        csharp.append(".IsMatch(");
-        csharp.append(anonName);
-        csharp.append(".");
-        csharp.append(colStr);
-        csharp.append(")");
+        csharp.append("new").append(" ").append("Regex(").append(regex(str)).append(")");
+        csharp.append(".IsMatch(").append(anonName).append(".").append(colStr).append(")");
         return csharp.toString();
     }
 
@@ -375,8 +379,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             }else if (c == '_'){
                 strReg.append(".");
             }else if (hSet.contains(c)){
-                strReg.append('\\');
-                strReg.append(c);
+                strReg.append('\\').append(c);
             }else{
                 strReg.append(c);
             }
@@ -388,9 +391,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     public String visitLogic_null_cmp(SQLParser.Logic_null_cmpContext ctx) {
         StringBuilder csharp = new StringBuilder();
         String colStr = visit(ctx.getChild(0));
-        csharp.append(anonName);
-        csharp.append(".");
-        csharp.append(colStr);
+        csharp.append(anonName).append(".").append(colStr);
         if (ctx.getChildCount() == 3) {
             csharp.append(" == ");
         } else {
