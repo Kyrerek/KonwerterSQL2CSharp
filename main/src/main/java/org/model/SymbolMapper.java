@@ -11,9 +11,9 @@ public class SymbolMapper {
     static {
         symbolsMap = Map.ofEntries(
                 Map.entry(LBRACKET,"("),
-                Map.entry(RBRACKET,"("),
+                Map.entry(RBRACKET,")"),
                 Map.entry(OR,"||"),
-                Map.entry(AND,"&&"),
+                Map.entry(AND," && "),
                 Map.entry(NOT,"!"),
                 Map.entry(EGREATER,"=>"),
                 Map.entry(ELESS,"<="),
