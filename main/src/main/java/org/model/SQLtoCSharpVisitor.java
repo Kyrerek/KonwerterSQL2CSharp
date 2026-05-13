@@ -408,6 +408,9 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                     csharp.append(SymbolMapper.getSymbolsMap().get(termType));
                 }
             } else if (child instanceof ParserRuleContext logicChild) {
+                if (logicChild instanceof SQLParser.ColumnContext childColTxt) {
+                    csharp.append(anonName + ".");
+                }
                 csharp.append(visit(logicChild));
             }
         }
