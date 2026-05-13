@@ -28,6 +28,11 @@ public class Main {
                 UPDATE users
                 SET age = age * 1.10, name = 'UNKNOWN', country = NULL
                 WHERE name LIKE '%____%';
+                INSERT INTO Users (name,age,country,code)
+                VALUES
+                ('User1', 10, 'Norway'),
+                ('Per Olsen', 20, NULL),
+                ('Finn Egan', 50, 'Poland');
                 """;
         SQLLexer lexer = new SQLLexer(CharStreams.fromString(sqlStr));
         CommonTokenStream tokens = new CommonTokenStream(lexer);

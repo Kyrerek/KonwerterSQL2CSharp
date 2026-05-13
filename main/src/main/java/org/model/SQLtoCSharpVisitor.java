@@ -341,6 +341,43 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         return false;
     }
 
+    @Override
+    public String visitInsert_stm(Insert_stmContext ctx) {
+        StringBuilder csharp = new StringBuilder();
+        var idStr = ctx.into_stm().ID().getText();
+        idStr = idStr.substring(0, idStr.length() - 1);
+        var parStr = new ArrayList<String>();
+        for (var id: ctx.into_stm().into_bracket_list().ID()){
+            parStr.add(id.getText());
+        }
+        csharp.append("BulkInsert(new ").append(idStr).append("[] {");
+        var val_ll = ctx.values_stm().values_list().values_item();
+        for (int i=0; i<val_ll.size() - 1; i++){
+            csharp.append("\n\tnew ").append(idStr).append(" { ");
+            var val_l = val_ll.get(i).values_item_list().value();
+            fillInsideInsert(csharp,val_l,parStr);
+            csharp.append("},");
+        }
+        csharp.append("\n\tnew ").append(idStr).append(" { ");
+        var val_l = val_ll.getLast().values_item_list().value();
+        fillInsideInsert(csharp,val_l,parStr);
+        csharp.append("}");
+        csharp.append("\n})");
+        return csharp.toString();
+    }
+
+    private void fillInsideInsert(StringBuilder csharp, List<SQLParser.ValueContext> val_l,ArrayList<String> parStr){
+        for (int j=0; j<val_l.size() - 1; j++){
+            csharp.append(parStr.get(j)).append(" = ").append(visit(val_l.get(j))).append(", ");
+        }
+        csharp.append(parStr.getLast()).append(" = ").append(visit(val_l.getLast())).append(" ");
+    }
+
+    @Override
+    public String visitValue(ValueContext ctx) {
+        return simpleChangeTerm(ctx);
+    }
+
     //Logic Form
     @Override
     public String visitLogic_form(SQLParser.Logic_formContext ctx) {
