@@ -178,7 +178,6 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         if (ctx == null) return JoinType.INNER;
         if (ctx.LEFT() != null) return JoinType.LEFT;
         if (ctx.RIGHT() != null) return JoinType.RIGHT;
-        if (ctx.FULL() != null) return JoinType.FULL;
         return JoinType.INNER;
     }
 
