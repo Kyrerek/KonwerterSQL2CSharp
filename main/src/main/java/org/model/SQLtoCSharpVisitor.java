@@ -7,7 +7,9 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static antlr.SQLParser.*;
 
@@ -343,23 +345,52 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     public String visitLogic_like_cmp(SQLParser.Logic_like_cmpContext ctx) {
         StringBuilder csharp = new StringBuilder();
         String colStr = visit(ctx.getChild(0));
+        String str = "";
         if (ctx.getChildCount() == 3) {
-            String str = ctx.getChild(2).getText();
-            csharp.append(" == ");
-            csharp.append(str);
+            str = ctx.getChild(2).getText();
         } else {
-            String str = ctx.getChild(3).getText();
-            csharp.append(" != ");
-            csharp.append(str);
+            csharp.append("!");
+            str = ctx.getChild(3).getText();
         }
+        str = csharpStr(str);
+        csharp.append("new");
+        csharp.append(" ");
+        csharp.append("Regex(");
+        csharp.append(regex(str));
+        csharp.append(")");
+        csharp.append(".IsMatch(");
+        csharp.append(anonName);
+        csharp.append(".");
+        csharp.append(colStr);
+        csharp.append(")");
         return csharp.toString();
+    }
+
+    private String regex(String str){
+        StringBuilder strReg = new StringBuilder();
+        Set<Character> hSet = Set.of('.','*','+','?','^','$','[',']','{','}','(',')','|','\\');
+        for (char c: str.toCharArray()){
+            if (c == '%'){
+                strReg.append(".*");
+            }else if (c == '_'){
+                strReg.append(".");
+            }else if (hSet.contains(c)){
+                strReg.append('\\');
+                strReg.append(c);
+            }else{
+                strReg.append(c);
+            }
+        }
+        return strReg.toString();
     }
 
     @Override
     public String visitLogic_null_cmp(SQLParser.Logic_null_cmpContext ctx) {
         StringBuilder csharp = new StringBuilder();
         String colStr = visit(ctx.getChild(0));
-        csharp.append(anonName+ "." + colStr);
+        csharp.append(anonName);
+        csharp.append(".");
+        csharp.append(colStr);
         if (ctx.getChildCount() == 3) {
             csharp.append(" == ");
         } else {
@@ -391,7 +422,6 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitItem(SQLParser.ItemContext ctx) {
-        System.out.println(ctx.getText());
         return simpleChangeTerm(ctx);
     }
 
@@ -401,11 +431,11 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             ParseTree child = ctx.getChild(i);
             if (child instanceof TerminalNode termChild) {
                 int termType = termChild.getSymbol().getType();
-                if (termType == NUM || termType == INT || termType == STR) {
-                    System.out.println(termChild.getText());
+                if (termType == STR) {
+                    csharp.append(csharpStr(termChild.getText()));
+                }else if (termType == NUM || termType == INT) {
                     csharp.append(termChild.getText());
                 } else {
-                    System.out.println(SymbolMapper.getSymbolsMap().get(termType));
                     csharp.append(SymbolMapper.getSymbolsMap().get(termType));
                 }
             } else if (child instanceof ParserRuleContext logicChild) {
@@ -415,8 +445,18 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 csharp.append(visit(logicChild));
             }
         }
-        System.out.println(csharp.toString());
         return csharp.toString();
+    }
+
+    public String csharpStr(String sqlStr){
+        if (sqlStr == null || sqlStr.length() < 2 || sqlStr.charAt(0) != '\'' || sqlStr.charAt(sqlStr.length()-1) != '\'') {
+            throw new IllegalArgumentException("Invalid SQL string literal");
+        }
+        String insideStr = sqlStr.substring(1, sqlStr.length()-1);
+        while (insideStr.contains("''")){
+            insideStr = insideStr.replace("''", "'");
+        }
+        return "\"" + insideStr + "\"";
     }
 }
 

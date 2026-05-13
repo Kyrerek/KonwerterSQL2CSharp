@@ -19,7 +19,7 @@ public class Main {
 //        ORDER BY klienci.nazwa DESC;
 //        """.trim();
         String sqlStr = """
-                SELECT DISTINCT name, age FROM users WHERE age > 18 AND age is NOT NULL; 
+                SELECT DISTINCT name, age FROM users WHERE (age > 18 AND age is NOT NULL) or name NOT LIKE '%_OO%' and age BETWEEN 10 AND 100; 
                 SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept;
                 SELECT e.DeptId FROM Employees AS e JOIN Departments AS d ON e.DeptId = d.Id;
                 SELECT e.DeptId FROM Employees AS e LEFT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;
