@@ -289,6 +289,58 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         return csharp.toString();
     }
 
+    @Override
+    public String visitUpdate_stm(Update_stmContext ctx) {
+        StringBuilder csharp = new StringBuilder(ctx.ID().getText());
+
+        if (ctx.getChildCount() == 4) {
+            csharp.append("\n\t.Where(temp => ").append(visit(ctx.where_stm())).append(')');
+        }
+        csharp.append(visit(ctx.set_stm()));
+        return csharp.toString();
+    }
+
+    @Override
+    public String visitSet_stm(Set_stmContext ctx) {
+        return "\n\t.ExecuteUpdate(setters => setters" + visit(ctx.set_list()) + "\n\t)";
+    }
+
+    @Override
+    public String visitSet_list(Set_listContext ctx) {
+        var csharp = new StringBuilder();
+        var setItems = ctx.set_item();
+        for (var item : setItems){
+            csharp.append(visit(item));
+        }
+        return csharp.toString();
+    }
+
+    @Override
+    public String visitSet_item(Set_itemContext ctx) {
+        var csharp = new StringBuilder();
+        csharp.append("\n\t\t.SetProperty(");
+        csharp.append(anonName).append(" => ");
+        csharp.append(anonName).append('.').append(ctx.ID().getText()).append(", ");
+        var child = ctx.getChild(2);
+        if (hasColumnInside(child)) {
+            csharp.append(anonName).append(" => ");
+        }
+        csharp.append(visit(ctx.getChild(2))).append(")");
+        return csharp.toString();
+    }
+
+    private boolean hasColumnInside(ParseTree node) {
+        if (node instanceof SQLParser.ColumnContext) {
+            return true;
+        }
+        for (int i = 0; i < node.getChildCount(); i++) {
+            if (hasColumnInside(node.getChild(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     //Logic Form
     @Override
     public String visitLogic_form(SQLParser.Logic_formContext ctx) {
