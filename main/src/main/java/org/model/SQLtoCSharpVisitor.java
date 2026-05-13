@@ -359,6 +359,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     public String visitLogic_null_cmp(SQLParser.Logic_null_cmpContext ctx) {
         StringBuilder csharp = new StringBuilder();
         String colStr = visit(ctx.getChild(0));
+        csharp.append(anonName+ "." + colStr);
         if (ctx.getChildCount() == 3) {
             csharp.append(" == ");
         } else {
