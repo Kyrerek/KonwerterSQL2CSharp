@@ -34,6 +34,16 @@ public class Main {
                 ('User1', 10, 'Norway'),
                 ('Per Olsen', 20, NULL),
                 ('Finn Egan', 50, 'Poland');
+                SELECT a.Name, b.Price, c.Category
+                FROM TableA AS a
+                JOIN TableB AS b ON a.Id = b.AId
+                JOIN TableC AS c ON b.Id = c.BId
+                JOIN TableD AS d ON d.BId = a.Id;
+                SELECT a.Name, b.Price, c.Category
+                FROM TableA AS a
+                LEFT JOIN TableB AS b ON a.Id = b.AId
+                LEFT JOIN TableC AS c ON b.Id = c.BId
+                LEFT JOIN TableD AS d ON d.BId = a.Id;
                 """;
         SQLLexer lexer = new SQLLexer(CharStreams.fromString(sqlStr));
         CommonTokenStream tokens = new CommonTokenStream(lexer);

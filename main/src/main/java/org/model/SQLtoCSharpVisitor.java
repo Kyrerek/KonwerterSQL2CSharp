@@ -6,10 +6,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static antlr.SQLParser.*;
 
@@ -18,6 +15,12 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     private List<String> groupedColumns;
     private final String anonName = "temp";
     private int tablesToJoin;
+    private List<String> prevJoins;
+    private final List<String> errors = new ArrayList<>();
+
+    public List<String> getErrors() {
+        return errors;
+    }
 
     @Override
     public String visitQuery(SQLParser.QueryContext ctx) {
@@ -34,6 +37,8 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     @Override
     public String visitSelect_stm(SQLParser.Select_stmContext ctx) {
         isGrouped = false;
+        tablesToJoin = 1;
+        prevJoins = new ArrayList<>();
 
         mainName = visit(ctx.from_stm());
         mainTable = ctx.from_stm().ID().getFirst().getText();
@@ -41,7 +46,16 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
         // JOIN
         if (!ctx.join_stm().isEmpty()) {
+            if (ctx.join_stm().size() > 1) {
+                boolean anyRight = ctx.join_stm().stream()
+                        .anyMatch( x -> detectJoinType(x.join_bef()) == JoinType.RIGHT);
+                if (anyRight) {
+                    errors.add("Błąd w linii "+ctx.start.getLine()+": wiele joinów z RIGHT JOIN nie jest wspierane.");
+                    return "/* Błąd przez brak wsparcia dla wielu joinów z RIGHT JOIN. */";
+                }
+            }
             for (var join_stmContext : ctx.join_stm()) {
+                tablesToJoin++;
                 csharp.append(visit(join_stmContext));
             }
         } else{
@@ -160,17 +174,35 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         String joinTable = ctx.ID().getFirst().getText();
         String joinName = ctx.ID().size() == 1 ? ctx.ID().getFirst().getText() : ctx.ID().get(1).getText();
 
-        List<String> leftSide = new ArrayList<>();
-        List<String> rightSide = new ArrayList<>();
+        String mainNameJoin;
+
+        List<String> mainSide = new ArrayList<>();
+        List<String> joinSide = new ArrayList<>();
         for (var on : ctx.join_on()) {
-            leftSide.add(visit(on.column(0)));
-            rightSide.add(visit(on.column(1)));
+            String first = visit(on.column(0));
+            if (first.startsWith(joinName)){
+                joinSide.add(first);
+                mainSide.add(visit(on.column(1)));
+            } else {
+                mainSide.add(first);
+                joinSide.add(visit(on.column(1)));
+            }
         }
 
+        if (tablesToJoin == 2) {
+            mainNameJoin = mainName;
+            prevJoins.addAll(Arrays.asList(mainNameJoin, joinName));
+        } else {
+            String temp = mainSide.getFirst();
+            mainNameJoin = temp.substring(0, temp.indexOf('.'));
+            prevJoins.add(joinName);
+        }
         return switch (joinType) {
-            case INNER -> mainTable+buildInnerJoin(joinTable, joinName, leftSide, rightSide);
-            case LEFT -> mainTable+buildGroupJoin(joinTable, joinName, leftSide, rightSide, mainName, joinName);
-            case RIGHT -> joinTable+buildGroupJoin(mainTable, mainName, rightSide, leftSide, joinName, mainName);
+            case INNER -> tablesToJoin == 2 ? mainTable+buildInnerJoin(joinTable, mainNameJoin, joinName, mainSide, joinSide)
+                    : buildInnerJoin(joinTable, mainNameJoin, joinName, mainSide, joinSide);
+            case LEFT -> tablesToJoin == 2 ? mainTable+buildGroupJoin(joinTable, joinName, mainSide, joinSide, mainNameJoin, joinName)
+                    : buildGroupJoin(joinTable, joinName, mainSide, joinSide, mainNameJoin, joinName);
+            case RIGHT -> joinTable+buildGroupJoin(mainTable, mainNameJoin, joinSide, mainSide, joinName, mainNameJoin);
         };
     }
 
@@ -188,7 +220,32 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         return param + " => new {" + String.join(", ", keys) + "}";
     }
 
-    private String buildInnerJoin(String joinTable, String joinName, List<String> leftSide, List<String> rightSide) {
+    private String buildInnerJoin(String joinTable, String mainName, String joinName, List<String> mainSide, List<String> joinSide) {
+        if (tablesToJoin > 2){
+            mainSide.replaceAll(s -> "prev."+s);
+            StringBuilder multiTable = new StringBuilder();
+            for (int i = 0; i < tablesToJoin; i++) {
+                if (i < tablesToJoin -1 ){
+                    multiTable.append("prev.").append(prevJoins.get(i)).append(", ");
+                }else{
+                    multiTable.append(prevJoins.get(i));
+                }
+            }
+            return """
+                
+                \t.Join(
+                \t\t%s,
+                \t\t%s,
+                \t\t%s,
+                \t\t(prev, %s) => new {%s}
+                \t)""".formatted(
+                    joinTable,
+                    buildKeySelector("prev", mainSide),
+                    buildKeySelector(joinName, joinSide),
+                    joinName,
+                    multiTable.toString()
+            );
+        }
         return """
                 
                 \t.Join(
@@ -198,15 +255,50 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 \t\t(%s, %s) => new {%s, %s}
                 \t)""".formatted(
                 joinTable,
-                buildKeySelector(mainName, leftSide),
-                buildKeySelector(joinName, rightSide),
+                buildKeySelector(mainName, mainSide),
+                buildKeySelector(joinName, joinSide),
                 mainName, joinName,
                 mainName, joinName
         );
     }
 
-    private String buildGroupJoin(String joinTable, String joinName, List<String> leftSide, List<String> rightSide, String outerParam, String innerParam) {
+    private String buildGroupJoin(String joinTable, String joinName, List<String> mainSide, List<String> joinSide, String outerParam, String innerParam) {
         String groupName = joinName + "Group";
+        if (tablesToJoin > 2){
+            mainSide.replaceAll(s -> "prev."+s);
+            StringBuilder multiTable = new StringBuilder();
+            for (int i = 0; i < tablesToJoin; i++) {
+                if (i < tablesToJoin -1){
+                    multiTable.append(prevJoins.get(i))
+                            .append(" = ")
+                            .append(anonName)
+                            .append(".prev.")
+                            .append(prevJoins.get(i)).append(", ");
+                }else{
+                    multiTable.append(prevJoins.get(i));
+                }
+            }
+            return """
+                
+                \t.GroupJoin(
+                \t\t%s,
+                \t\t%s,
+                \t\t%s,
+                \t\t(%s, %s) => new {%s, %s}
+                \t)
+                \t.SelectMany(
+                \t\t%s => %s.%s.DefaultIfEmpty(),
+                \t\t(%s, %s) => new {%s}
+                \t)""".formatted(
+                    joinTable,
+                    buildKeySelector("prev", mainSide),
+                    buildKeySelector(innerParam, joinSide),
+                    "prev", groupName, "prev", groupName,
+                    anonName, anonName, groupName,
+                    anonName, joinName,
+                    multiTable, joinName
+            );
+        }
         return """
                 
                 \t.GroupJoin(
@@ -220,12 +312,12 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 \t\t(%s, %s) => new {%s = %s.%s, %s}
                 \t)""".formatted(
                 joinTable,
-                buildKeySelector(outerParam, leftSide),
-                buildKeySelector(innerParam, rightSide),
+                buildKeySelector(outerParam, mainSide),
+                buildKeySelector(innerParam, joinSide),
                 outerParam, groupName, outerParam, groupName,
                 anonName, anonName, groupName,
                 anonName, joinName,
-                mainName, anonName, mainName, joinName
+                outerParam, anonName, outerParam, joinName
         );
     }
 
