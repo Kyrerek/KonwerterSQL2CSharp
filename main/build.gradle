@@ -16,6 +16,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     antlr "org.antlr:antlr4:4.13.1"
     implementation "org.antlr:antlr4-runtime:4.13.1"
+    implementation 'com.fifesoft:rsyntaxtextarea:3.3.3'
 }
 
 test {

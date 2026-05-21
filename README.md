@@ -6,7 +6,21 @@
 - erykleski@student.agh.edu.pl
 ## Założenia programu
 ### Ogólne cele programu
-Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#. Będą to zapytania z wykorzystaniem SELECT, INSERT, DELETE i UPDATE. Będzie można używać: JOIN, WHERE, funkcji agregujących, HAVING, ORDER, GROUP, aliasowania. 
+Program ma za zadanie przekonwertowanie zapytań SQL do kodu w języku C#, a dokładnie do LINQ Method Syntax. Będą to zapytania z wykorzystaniem: 
+- SELECT, 
+- INSERT, 
+- DELETE,
+- UPDATE. 
+Dodatkowo do tych zapytań można używać: 
+- JOIN, 
+- WHERE, 
+- funkcje agregujące, 
+- HAVING, 
+- ORDER BY, 
+- GROUP BY, 
+- aliasowania,
+- VALUES,
+- SET. 
 ### Rodzaj translatora
 - Kompilator
 ### Planowany wynik działania programu

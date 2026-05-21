@@ -6,6 +6,9 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import antlr.SQLParser;
 import antlr.SQLLexer;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rtextarea.RTextScrollPane;
 import org.model.SQLtoCSharpVisitor;
 
 import javax.swing.*;
@@ -24,9 +27,10 @@ public class Main {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
-        JTextArea editTxtArea = new JTextArea(20,50);
-        editTxtArea.setLineWrap(false);
-        editTxtArea.setWrapStyleWord(false);
+        RSyntaxTextArea editTxtArea = new RSyntaxTextArea(20,50);
+        editTxtArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
+        editTxtArea.setCodeFoldingEnabled(true);
+        editTxtArea.setTabSize(4);
 
         String sqlStr = """
         SELECT DISTINCT name, age FROM users WHERE (age > 18 AND age is NOT NULL) or name NOT LIKE '%_OO%' and age BETWEEN 10 AND 100;
@@ -55,25 +59,21 @@ public class Main {
         LEFT JOIN TableC AS c ON b.Id = c.BId
         LEFT JOIN TableD AS d ON d.BId = a.Id;
         """;
-
         editTxtArea.setText(sqlStr);
 
 
-        JScrollPane editScrollP = new JScrollPane(editTxtArea);
-        editScrollP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        editScrollP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        RTextScrollPane editScrollP = new RTextScrollPane(editTxtArea);
 
         JButton button = new JButton("Generate C#");
         button.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JTextArea textArea = new JTextArea(20,50);
+        RSyntaxTextArea textArea = new RSyntaxTextArea(20,50);
+        textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_CSHARP);
+        textArea.setCodeFoldingEnabled(true);
         textArea.setEditable(false);
-        textArea.setLineWrap(false);
-        textArea.setWrapStyleWord(false);
+        textArea.setTabSize(4);
 
-        JScrollPane textScrollP = new JScrollPane(textArea);
-        textScrollP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        textScrollP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        RTextScrollPane textScrollP = new RTextScrollPane(textArea);
 
         button.addActionListener(e ->
                 textArea.setText(sqlToCSharp(editTxtArea.getText())));

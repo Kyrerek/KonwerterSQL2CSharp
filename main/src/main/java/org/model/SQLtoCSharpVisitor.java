@@ -26,7 +26,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     public String visitQuery(SQLParser.QueryContext ctx) {
         StringBuilder csharp = new StringBuilder();
         for (var query : ctx.operation()) {
-            csharp.append(visit(query)).append(";\n");
+            csharp.append(visit(query)).append(";\n\n");
         }
         return csharp.toString();
     }
