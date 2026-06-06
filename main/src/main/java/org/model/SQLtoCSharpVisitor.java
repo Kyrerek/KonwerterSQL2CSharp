@@ -643,5 +643,96 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         }
         return "\"" + insideStr + "\"";
     }
+
+    private List<String> uniqueList;
+    @Override
+    public String visitCreate_stm(SQLParser.Create_stmContext ctx){
+        uniqueList =  new ArrayList<>();
+        StringBuilder str = new StringBuilder("public class " +
+                ctx.ID() +
+                "\n{" +
+                visit(ctx.create_list()) +
+                '}');
+        for (var u : uniqueList){
+            str.insert(0, "[Index(nameof(" + u + "), IsUnique = true)]\n");
+        }
+        return str.toString();
+    }
+
+    @Override
+    public String visitCreate_list(SQLParser.Create_listContext ctx){
+        StringBuilder builder = new StringBuilder();
+        for (var e : ctx.create_element()){
+            builder.append(visit(e));
+        }
+        return builder.toString();
+    }
+
+    private String getDataType(SQLParser.Data_typeContext ctx){
+        if (ctx.INT_TYPE() != null) return "int?";
+        if (ctx.NUMERIC() != null) return "decimal?";
+        if (ctx.VARCHAR() != null) return  "string?";
+        return "bool?";
+    }
+
+    private enum ContraintType{
+        PRIMARY, REF, UNIQUE, DEFAULT, NOTNULL
+    }
+
+    private ContraintType detectConstraintType(SQLParser.ContraintContext ctx){
+        if (ctx.UNIQUE() != null) return ContraintType.UNIQUE;
+        if (ctx.NULL() != null) return ContraintType.NOTNULL;
+        if (ctx.PRIMARY() != null) return ContraintType.PRIMARY;
+        if (ctx.DEFAULT() != null) return ContraintType.DEFAULT;
+        return ContraintType.REF;
+    }
+
+    @Override
+    public String visitCreate_element(SQLParser.Create_elementContext ctx){
+        StringBuilder builder = new StringBuilder();
+        String type = getDataType(ctx.data_type());
+        boolean isNullable = true;
+        String defaultVal = null;
+        boolean required = false;
+        String fk = null;
+        for (var c : ctx.contraint()){
+            switch (detectConstraintType(c)){
+                case ContraintType.UNIQUE -> uniqueList.add(ctx.ID().toString());
+                case ContraintType.NOTNULL -> {
+                    isNullable = false;
+                    required = true;
+                }
+                case ContraintType.PRIMARY -> {
+                    builder.append("\n\t[Key]");
+                    isNullable = false;
+                }
+                case ContraintType.DEFAULT -> defaultVal = visit(c.value());
+                case ContraintType.REF -> fk = """ 
+                        
+                        \t[ForeignKey(nameof(%s))]
+                        \tpublic virtual %s %sFK {get; set;}
+                        """.formatted(ctx.ID(), c.ID(0), c.ID(0));
+            }
+        }
+        if (!isNullable){
+            type = type.substring(0, type.length()-1);
+        }
+        builder.append("\n\tpublic ");
+        if (required){
+            builder.append("required ");
+        }
+        builder.append(type)
+                .append(' ')
+                .append(ctx.ID())
+                .append(" {get; set;}");
+        if (defaultVal != null){
+            builder.append(" = ")
+                    .append(defaultVal);
+        }
+        if (fk != null){
+            builder.append('\n').append(fk);
+        }
+        return builder.append('\n').toString();
+    }
 }
 

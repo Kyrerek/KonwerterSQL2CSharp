@@ -261,7 +261,7 @@ CREATE: [cC][rR][eE][aA][tT][eE];
 TABLE: [tT][aA][bB][lL][eE];
 PRIMARY: [pP][rR][iI][mM][aA][rR][yY];
 KEY: [kK][eE][yY];
-UNIQUE: [uU][nN][iI][qQuU][eE];
+UNIQUE: [uU][nN][iI][qQ][uU][eE];
 DEFAULT: [dD][eE][fF][aA][uU][lL][tT];
 REFERENCES: [rR][eE][fF][eE][rR][eE][nN][cC][eE][sS];
 INT_TYPE: [iI][nN][tT] | [iI][nN][tT][eE][gG][eE][rR];

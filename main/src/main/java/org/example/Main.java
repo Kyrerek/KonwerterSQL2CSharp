@@ -58,6 +58,16 @@ public class Main {
         LEFT JOIN TableB AS b ON a.Id = b.AId
         LEFT JOIN TableC AS c ON b.Id = c.BId
         LEFT JOIN TableD AS d ON d.BId = a.Id;
+        CREATE TABLE Departments (
+            Id INT PRIMARY KEY
+        );
+        CREATE TABLE Employees (
+            Id INT PRIMARY KEY,
+            Username VARCHAR(50) NOT NULL UNIQUE,
+            Salary DECIMAL DEFAULT 3000.00 UNIQUE,
+            IsActive BOOLEAN DEFAULT TRUE,
+            DeptId INT REFERENCES Departments(Id)
+        );
         """;
         editTxtArea.setText(sqlStr);
 
