@@ -77,11 +77,11 @@ Dodatkowo do tych zapytań można używać:
 |   `INSERT`   | Słowo kluczowe "insert"                                                                               |           `insert`, `INSERT`           |
 |    `INTO`    | Słowo kluczowe "into", używane zaraz po "insert"                                                      |             `into`, `INTO`             |
 |   `VALUES`   | Słowo kluzowe "values", używane do określania wartości do dodania w "insert into"                     |           `values`, `VALUES`           |
-|   `CREATE`   | Słowo kluczowe "create", używane do inicjalizacji tworzenia nowych obiektów bazy danych               |           `create`, `CREATE`           |
+|   `CREATE`   | Słowo kluczowe "create"                                                                               |           `create`, `CREATE`           |
 |   `TABLE`    | Słowo kluczowe "table", używane po "create" do określenia tworzenia struktury tabeli                  |            `table`, `TABLE`            |
 |  `PRIMARY`   | Słowo kluczowe "primary", występuje przed słowem "key" przy definicji klucza głównego kolumny         |          `primary`, `PRIMARY`          |
 |    `KEY`     | Słowo kluczowe "key", występuje po słowie "primary" przy definicji klucza głównego kolumny            |              `key`,`KEY`               |
-|   `UNIQUE`   | Słowo kluczowe "unique", ograniczenie (constraint) wymuszające unikalność wartości w danej kolumnie   |           `unique`, `UNIQUE`           |
+|   `UNIQUE`   | Słowo kluczowe "unique", ograniczenie wymuszające unikalność wartości w danej kolumnie                |           `unique`, `UNIQUE`           |
 |  `DEFAULT`   | Słowo kluczowe "default", służy do określania domyślnej wartości dla kolumny w przypadku braku danych |          `default`, `DEFAULT`          |
 | `REFERENCES` | Słowo kluczowe "references", używane do definiowania relacji i kluczy obcych między tabelami          |       `references`, `REFERENCES`       |
 |  `INT_TYPE`  | Typ danych dla liczb całkowitych.                                                                     |      `int`, `INTEGER`, `integer`       |
