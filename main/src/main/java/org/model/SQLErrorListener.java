@@ -12,8 +12,7 @@ public class SQLErrorListener extends BaseErrorListener {
 
     @Override
     public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-        if (msg != null && msg.contains("<EOF>")) return;
-        errors.add("Błąd składni w linii " + line + ":" + charPositionInLine + " — " + msg);
+        errors.add("Błąd składni w linii " + line + ":" + charPositionInLine + " - " + msg);
     }
 
     public List<String> getErrors() {
