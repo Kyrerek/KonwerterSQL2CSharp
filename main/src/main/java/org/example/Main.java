@@ -156,6 +156,10 @@ public class Main {
     }
 
     public static String sqlToCSharp(String sql, RSyntaxTextArea errorArea) {
+        if (sql == null || sql.isBlank()) {
+            errorArea.setText("Nie podano żadnego wyrażenia SQL.");
+            return "";
+        }
         SQLErrorListener errorListener = new SQLErrorListener();
         SQLLexer lexer = new SQLLexer(CharStreams.fromString(sql));
         lexer.removeErrorListeners();

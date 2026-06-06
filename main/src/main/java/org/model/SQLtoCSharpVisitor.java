@@ -24,9 +24,6 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitQuery(SQLParser.QueryContext ctx) {
-        if (ctx.isEmpty() ){
-            return "/* Błąd składni lub brak wyrażenia SQL */";
-        }
         StringBuilder csharp = new StringBuilder();
         for (var query : ctx.operation()) {
             csharp.append(visit(query)).append(";\n\n");
