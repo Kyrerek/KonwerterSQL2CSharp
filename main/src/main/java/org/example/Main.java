@@ -9,10 +9,13 @@ import antlr.SQLLexer;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rtextarea.RTextScrollPane;
+import org.model.SQLErrorListener;
 import org.model.SQLtoCSharpVisitor;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class Main {
@@ -23,11 +26,7 @@ public class Main {
         frame.setSize(screenSize.width, screenSize.height);
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-
-        RSyntaxTextArea editTxtArea = new RSyntaxTextArea(20,50);
+        RSyntaxTextArea editTxtArea = new RSyntaxTextArea(20, 50);
         editTxtArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
         editTxtArea.setCodeFoldingEnabled(true);
         editTxtArea.setTabSize(4);
@@ -71,13 +70,13 @@ public class Main {
         """;
         editTxtArea.setText(sqlStr);
 
-
         RTextScrollPane editScrollP = new RTextScrollPane(editTxtArea);
 
-        JButton button = new JButton("Generate C#");
-        button.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JPanel sqlPanel = new JPanel(new BorderLayout(0, 4));
+        sqlPanel.add(new JLabel("Wejście SQL"), BorderLayout.NORTH);
+        sqlPanel.add(editScrollP, BorderLayout.CENTER);
 
-        RSyntaxTextArea textArea = new RSyntaxTextArea(20,50);
+        RSyntaxTextArea textArea = new RSyntaxTextArea(20, 50);
         textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_CSHARP);
         textArea.setCodeFoldingEnabled(true);
         textArea.setEditable(false);
@@ -85,25 +84,101 @@ public class Main {
 
         RTextScrollPane textScrollP = new RTextScrollPane(textArea);
 
-        button.addActionListener(e ->
-                textArea.setText(sqlToCSharp(editTxtArea.getText())));
+        JPanel csPanel = new JPanel(new BorderLayout(0, 4));
+        csPanel.add(new JLabel("Wynik C#"), BorderLayout.NORTH);
+        csPanel.add(textScrollP, BorderLayout.CENTER);
 
-        panel.add(editScrollP);
-        panel.add(Box.createVerticalStrut(20));
-        panel.add(button);
-        panel.add(Box.createVerticalStrut(20));
-        panel.add(textScrollP);
-        frame.add(panel);
+        RSyntaxTextArea errorArea = new RSyntaxTextArea(5, 50);
+        errorArea.setEditable(false);
+        errorArea.setForeground(Color.RED);
+        errorArea.setTabSize(4);
+
+        RTextScrollPane errorScrollP = new RTextScrollPane(errorArea);
+
+        JPanel errorPanel = new JPanel(new BorderLayout(0, 4));
+        errorPanel.setPreferredSize(new Dimension(0, 150));
+        errorPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        errorPanel.add(new JLabel("Błędy"), BorderLayout.NORTH);
+        errorPanel.add(errorScrollP, BorderLayout.CENTER);
+
+        JButton button = new JButton("Generuj C#");
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        button.addActionListener(e -> {
+            try {
+                textArea.setText(sqlToCSharp(editTxtArea.getText(), errorArea));
+            } catch (Exception ex) {
+                errorArea.setText("Nieoczekiwany błąd: " + ex.getMessage());
+            }
+        });
+
+        JPanel topPanel = new JPanel(new BorderLayout(20, 0));
+        topPanel.add(sqlPanel, BorderLayout.WEST);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
+        buttonPanel.add(Box.createVerticalGlue());
+        buttonPanel.add(button);
+        buttonPanel.add(Box.createVerticalGlue());
+        topPanel.add(buttonPanel, BorderLayout.CENTER);
+
+        topPanel.add(csPanel, BorderLayout.EAST);
+
+        sqlPanel.setPreferredSize(new Dimension(0, 0));
+        csPanel.setPreferredSize(new Dimension(0, 0));
+        topPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1.0;
+        gbc.gridy = 0;
+
+        gbc.gridx = 0;
+        gbc.weightx = 0.45;
+        topPanel.add(sqlPanel, gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.1;
+        gbc.insets = new Insets(0, 10, 0, 10);
+        topPanel.add(buttonPanel, gbc);
+
+        gbc.gridx = 2;
+        gbc.weightx = 0.45;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        topPanel.add(csPanel, gbc);
+
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        mainPanel.add(topPanel, BorderLayout.CENTER);
+        mainPanel.add(errorPanel, BorderLayout.SOUTH);
+
+        frame.add(mainPanel);
         frame.setVisible(true);
     }
 
-    public static String sqlToCSharp(String sql) {
+    public static String sqlToCSharp(String sql, RSyntaxTextArea errorArea) {
+        SQLErrorListener errorListener = new SQLErrorListener();
         SQLLexer lexer = new SQLLexer(CharStreams.fromString(sql));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(errorListener);
+
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SQLParser parser = new SQLParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(errorListener);
         ParseTree tree = parser.query();
 
         SQLtoCSharpVisitor visitor = new SQLtoCSharpVisitor();
-        return visitor.visit(tree);
+        String result = visitor.visit(tree);
+
+        List<String> allErrors = new ArrayList<>(errorListener.getErrors());
+        allErrors.addAll(visitor.getErrors());
+
+        if (!allErrors.isEmpty()) {
+            errorArea.setText(String.join("\n", allErrors));
+        } else {
+            errorArea.setText("");
+        }
+
+        return result;
     }
 }
