@@ -84,7 +84,7 @@ Dodatkowo do tych zapytań można używać:
 |   `UNIQUE`   | Słowo kluczowe "unique", ograniczenie wymuszające unikalność wartości w danej kolumnie                |           `unique`, `UNIQUE`           |
 |  `DEFAULT`   | Słowo kluczowe "default", służy do określania domyślnej wartości dla kolumny w przypadku braku danych |          `default`, `DEFAULT`          |
 | `REFERENCES` | Słowo kluczowe "references", używane do definiowania relacji i kluczy obcych między tabelami          |       `references`, `REFERENCES`       |
-|  `INT_TYPE`  | Typ danych dla liczb całkowitych.                                                                     |      `int`, `INTEGER`, `integer`       |
+|  `INT_TYPE`  | Typ danych dla liczb całkowitych.                                                                     |   `int`, `integer`, `INT`, `INTEGER`   |
 |  `VARCHAR`   | Typ danych dla ciągów znaków o zmiennej lub określonej długości                                       |          `varchar`, `VARCHAR`          |
 |  `NUMERIC`   | Typ danych dla liczb rzeczywistych                                                                    | `decimal`, `float`, `DECIMAL`, `FLOAT` |
 |  `BOOLEAN`   | Typ danych dla wartości logicznych                                                                    |          `boolean`, `BOOLEAN`          |                                                            
