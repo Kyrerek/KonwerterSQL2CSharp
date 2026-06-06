@@ -87,7 +87,7 @@ Dodatkowo do tych zapytań można używać:
 |  `INT_TYPE`  | Typ danych dla liczb całkowitych.                                                                     |      `int`, `INTEGER`, `integer`       |
 |  `VARCHAR`   | Typ danych dla ciągów znaków o zmiennej lub określonej długości                                       |          `varchar`, `VARCHAR`          |
 |  `NUMERIC`   | Typ danych dla liczb rzeczywistych                                                                    | `decimal`, `float`, `DECIMAL`, `FLOAT` |
-|  `BOOLEAN`   | Typ danych dla wartości logicznych                                                                    |           `boolean`, `BOOL`            |                                                            
+|  `BOOLEAN`   | Typ danych dla wartości logicznych                                                                    |          `boolean`, `BOOLEAN`          |                                                            
 |    `PLUS`    | Znak dodawania                                                                                        |                  `+`                   |
 |   `MINUS`    | Znak odejmowania                                                                                      |                  `-`                   |
 |    `MULT`    | Znak mnożenia                                                                                         |                  `*`                   |
