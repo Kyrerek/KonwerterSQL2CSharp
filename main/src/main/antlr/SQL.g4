@@ -7,7 +7,27 @@ package antlr;
 query : operation END (operation END)*;
 
 operation
-    : select_stm | update_stm | delete_stm | insert_stm
+    : select_stm | update_stm | delete_stm | insert_stm | create_stm
+    ;
+
+create_stm
+    : CREATE TABLE ID LBRACKET create_list RBRACKET
+    ;
+
+create_list
+    : create_element (COMMA create_element)*
+    ;
+
+create_element
+    : ID data_type (contraint)*
+    ;
+
+data_type
+    : INT_TYPE | NUMERIC | VARCHAR LBRACKET INT RBRACKET | BOOLEAN
+    ;
+
+contraint
+    : UNIQUE | NOT NULL | PRIMARY KEY | DEFAULT value | REFERENCES ID LBRACKET ID RBRACKET
     ;
 
 select_stm
@@ -237,6 +257,17 @@ DELETE: [dD][eE][lL][eE][tT][eE];
 INSERT: [iI][nN][sS][eE][rR][tT];
 INTO: [iI][nN][tT][oO];
 VALUES: [vV][aA][lL][uU][eE][sS];
+CREATE: [cC][rR][eE][aA][tT][eE];
+TABLE: [tT][aA][bB][lL][eE];
+PRIMARY: [pP][rR][iI][mM][aA][rR][yY];
+KEY: [kK][eE][yY];
+UNIQUE: [uU][nN][iI][qQuU][eE];
+DEFAULT: [dD][eE][fF][aA][uU][lL][tT];
+REFERENCES: [rR][eE][fF][eE][rR][eE][nN][cC][eE][sS];
+INT_TYPE: [iI][nN][tT] | [iI][nN][tT][eE][gG][eE][rR];
+VARCHAR: [vV][aA][rR][cC][hH][aA][rR];
+NUMERIC: [dD][eE][cC][iI][mM][aA][lL] | [fF][lL][oO][aA][tT];
+BOOLEAN: [bB][oO][oO][lL][eE][aA][nN];
 
 PLUS: '+';
 MINUS: '-';
