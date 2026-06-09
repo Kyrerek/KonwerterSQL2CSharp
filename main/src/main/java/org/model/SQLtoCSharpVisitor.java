@@ -3,6 +3,7 @@ package org.model;
 
 import antlr.SQLParser;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -17,6 +18,12 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     private int tablesToJoin;
     private List<String> prevJoins;
     private final List<String> errors = new ArrayList<>();
+    private Map<String, List<String>> tablesAndColumns = new HashMap<>();
+    private List<String> warnings;
+    private Set<String> columnsAliases;
+    private Set<String> tablesAliases;
+    private List<String> stmErrors;
+
 
     public List<String> getErrors() {
         return errors;
@@ -25,9 +32,11 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     @Override
     public String visitQuery(SQLParser.QueryContext ctx) {
         StringBuilder csharp = new StringBuilder();
+
         for (var query : ctx.operation()) {
             csharp.append(visit(query)).append(";\n\n");
         }
+        System.out.println(tablesAndColumns);
         return csharp.toString();
     }
 
@@ -36,6 +45,10 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitSelect_stm(SQLParser.Select_stmContext ctx) {
+        stmErrors = new ArrayList<>();
+        warnings = new ArrayList<>();
+        columnsAliases = new HashSet<>();
+        tablesAliases = new HashSet<>();
         isGrouped = false;
         tablesToJoin = 1;
         prevJoins = new ArrayList<>();
@@ -50,8 +63,8 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 boolean anyRight = ctx.join_stm().stream()
                         .anyMatch( x -> detectJoinType(x.join_bef()) == JoinType.RIGHT);
                 if (anyRight) {
-                    errors.add("Błąd w linii "+ctx.start.getLine()+": wiele joinów z RIGHT JOIN nie jest wspierane.");
-                    return "/* Błąd przez brak wsparcia dla wielu joinów z RIGHT JOIN. */";
+                    errors.add("ERROR: Błąd w linii "+ctx.start.getLine()+": wiele joinów z RIGHT JOIN nie jest wspierane.");
+                    return "/* ERROR: Błąd przez brak wsparcia dla wielu joinów z RIGHT JOIN. */";
                 }
             }
             for (var join_stmContext : ctx.join_stm()) {
@@ -90,6 +103,13 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             csharp.append(visit(ctx.order_stm()));
         }
 
+        if (!stmErrors.isEmpty()){
+            return String.join("\n", stmErrors);
+        }
+
+        for (var war : warnings){
+            csharp.insert(0, war);
+        }
         return csharp.toString();
     }
 
@@ -115,7 +135,15 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     public String visitSelect_item(SQLParser.Select_itemContext ctx) {
         StringBuilder csharp = new StringBuilder();
 
-        if (ctx.AS() != null) csharp.append(ctx.ID().getText()).append(" = ");
+        if (ctx.AS() != null) {
+            String alias = ctx.ID().getText();
+            Token aliasToken = ctx.ID().getSymbol();
+            if (!columnsAliases.add(alias)){
+                errors.add("ERROR: Błąd w linii "+aliasToken.getLine()+":"+aliasToken.getCharPositionInLine()+". Alias \""+alias+"\" jest już zajęty przez inną tabelę!");
+                stmErrors.add("/* ERROR: Błąd w linii "+aliasToken.getLine()+":"+aliasToken.getCharPositionInLine()+". Alias \""+alias+"\" jest już zajęty przez inną tabelę! */");
+            }
+            csharp.append(alias).append(" = ");
+        }
 
         if (ctx.column() != null) {
             var col = visit(ctx.column());
@@ -129,13 +157,29 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         return csharp.toString();
     }
 
+    // TODO: Jakoś lepiej zrobić to, bo chyba warningi są tu potrzebne (lepsze będą)
     @Override
     public String visitColumn(SQLParser.ColumnContext ctx) {
         if (ctx.PER() != null) {
-            List<TerminalNode> ids = ctx.ID();
-            return ids.get(0).getText() + '.' + ids.get(1).getText();
+            String table = ctx.ID().getFirst().getText();
+//            if (!(tablesAliases.contains(table) || tablesAndColumns.containsKey(table))){
+//                errors.add("ERROR: Błąd w linii "+ctx.start.getLine()+":"+ctx.start.getCharPositionInLine()+". Tabela lub alias tabeli \""+table+"\" nie istnieje!");
+//                stmErrors.add("/* ERROR: Błąd w linii "+ctx.start.getLine()+":"+ctx.start.getCharPositionInLine()+". Tabela lub alias tabeli \""+table+"\" nie istnieje! */");
+//            }
+            String column = ctx.ID().get(1).getText();
+//            if (tablesAndColumns.values().stream().noneMatch(x -> x.contains(column))){
+//                errors.add("ERROR: Błąd w linii "+ctx.start.getLine()+":"+ctx.start.getCharPositionInLine()+". Kolumna \""+column+"\" nie istnieje w żadnej tabeli!");
+//                stmErrors.add("/* ERROR: Błąd w linii "+ctx.start.getLine()+":"+ctx.start.getCharPositionInLine()+". Kolumna \""+column+"\" nie istnieje w żadnej tabeli! */");
+//
+//            }
+            return table + '.' + column;
         }
-        return ctx.getText();
+        String column = ctx.getText();
+//        if (tablesAndColumns.values().stream().noneMatch(x -> x.contains(column))){
+//            errors.add("ERROR: Błąd w linii "+ctx.start.getLine()+":"+ctx.start.getCharPositionInLine()+". Kolumna \""+column+"\" nie istnieje w żadnej tabeli!");
+//            stmErrors.add("/* ERROR: Błąd w linii "+ctx.start.getLine()+":"+ctx.start.getCharPositionInLine()+". Kolumna \""+column+"\" nie istnieje w żadnej tabeli! */");
+//        }
+        return column;
     }
 
     @Override
@@ -162,7 +206,21 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitFrom_stm(SQLParser.From_stmContext ctx) {
-        return ctx.ID().size() == 1 ? ctx.ID().getFirst().getText() : ctx.ID().get(1).getText();
+        String tableName = ctx.ID().getFirst().getText();
+        if (!tablesAndColumns.containsKey(tableName)){
+            errors.add("WARNING: Tabela o nazwie \""+tableName+"\" nie została określona przed linią "+ctx.start.getLine()+". Zalecane jest pierw jej stworzenie.");
+            warnings.add("/* WARNING: Tabela o nazwie \""+tableName+"\" nie została jeszcze określona! */\n");
+        }
+        if (ctx.AS() != null){
+            String alias = ctx.ID().get(1).getText();
+            Token aliasToken = ctx.ID().get(1).getSymbol();
+            if (!tablesAliases.add(alias)){
+                errors.add("ERROR: Błąd w linii "+aliasToken.getLine()+":"+aliasToken.getCharPositionInLine()+". Alias \""+alias+"\" jest już zajęty przez inną tabelę!");
+                stmErrors.add("/* ERROR: Błąd w linii "+aliasToken.getLine()+":"+aliasToken.getCharPositionInLine()+". Alias \""+alias+"\" jest już zajęty przez inną tabelę! */");
+            }
+            return alias;
+        }
+        return tableName;
     }
 
     private enum JoinType {INNER, LEFT, RIGHT}
@@ -172,8 +230,19 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         JoinType joinType = detectJoinType(ctx.join_bef());
 
         String joinTable = ctx.ID().getFirst().getText();
-        String joinName = ctx.ID().size() == 1 ? ctx.ID().getFirst().getText() : ctx.ID().get(1).getText();
-
+        if (!tablesAndColumns.containsKey(joinTable)){
+            errors.add("WARNING: Tabela o nazwie \""+joinTable+"\" nie została określona przed linią "+ctx.start.getLine()+". Zalecane jest pierw jej stworzenie.");
+            warnings.add("/* WARNING: Tabela o nazwie \""+joinTable+"\" nie została jeszcze określona! */\n");
+        }
+        String joinName = joinTable;
+        if (ctx.AS() != null){
+            joinName = ctx.ID().get(1).getText();
+            Token aliasToken = ctx.ID().get(1).getSymbol();
+            if (!tablesAliases.add(joinName)){
+                errors.add("ERROR: Błąd w linii "+aliasToken.getLine()+":"+aliasToken.getCharPositionInLine()+". Alias \""+joinName+"\" jest już zajęty przez inną tabelę!");
+                stmErrors.add("/* ERROR: Błąd w linii "+aliasToken.getLine()+":"+aliasToken.getCharPositionInLine()+". Alias \""+joinName+"\" jest już zajęty przez inną tabelę! */");
+            }
+        }
         String mainNameJoin;
 
         List<String> mainSide = new ArrayList<>();
@@ -647,6 +716,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     private List<String> uniqueList;
     @Override
     public String visitCreate_stm(SQLParser.Create_stmContext ctx){
+        tablesAndColumns.put(ctx.ID().getText(), new ArrayList<>());
         uniqueList =  new ArrayList<>();
         StringBuilder str = new StringBuilder("public class " +
                 ctx.ID() +
@@ -732,6 +802,13 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         if (fk != null){
             builder.append('\n').append(fk);
         }
+
+        String lastKey = null;
+        for (var key : tablesAndColumns.keySet()){
+            lastKey = key;
+        }
+        tablesAndColumns.get(lastKey).add(ctx.ID().getText());
+
         return builder.append('\n').toString();
     }
 }
