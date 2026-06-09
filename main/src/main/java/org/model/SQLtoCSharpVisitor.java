@@ -33,8 +33,16 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     public String visitQuery(SQLParser.QueryContext ctx) {
         StringBuilder csharp = new StringBuilder();
 
+        var creations = new ArrayList<SQLParser.Create_stmContext>();
         for (var query : ctx.operation()) {
-            csharp.append(visit(query)).append(";\n\n");
+            if (query.children.getFirst() instanceof SQLParser.Create_stmContext ) {
+                creations.add((SQLParser.Create_stmContext)query.children.getFirst());
+            }else {
+                csharp.append(visit(query)).append(";\n\n");
+            }
+        }
+        for (var stm : creations){
+            csharp.append(visit(stm)).append("\n\n");
         }
         System.out.println(tablesAndColumns);
         return csharp.toString();
@@ -54,7 +62,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         prevJoins = new ArrayList<>();
 
         mainName = visit(ctx.from_stm());
-        mainTable = ctx.from_stm().ID().getFirst().getText();
+        mainTable = wrapInDb(ctx.from_stm().ID().getFirst().getText());
         StringBuilder csharp = new StringBuilder();
 
         // JOIN
@@ -110,7 +118,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         for (var war : warnings){
             csharp.insert(0, war);
         }
-        return csharp.toString();
+        return csharp.toString() + ".Show()";
     }
 
     @Override
@@ -443,7 +451,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitDelete_stm(Delete_stmContext ctx) {
-        StringBuilder csharp = new StringBuilder(ctx.from_stm().ID().getFirst().getText());
+        StringBuilder csharp = new StringBuilder(wrapInDb(ctx.from_stm().ID().getFirst().getText()));
 
         if (ctx.getChildCount() == 3) {
             csharp.append("\n\t.Where(temp => ").append(visit(ctx.where_stm())).append(')');
@@ -455,7 +463,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitUpdate_stm(Update_stmContext ctx) {
-        StringBuilder csharp = new StringBuilder(ctx.ID().getText());
+        StringBuilder csharp = new StringBuilder(wrapInDb(ctx.ID().getText()));
 
         if (ctx.getChildCount() == 4) {
             csharp.append("\n\t.Where(temp => ").append(visit(ctx.where_stm())).append(')');
@@ -509,12 +517,11 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     public String visitInsert_stm(Insert_stmContext ctx) {
         StringBuilder csharp = new StringBuilder();
         var idStr = ctx.into_stm().ID().getText();
-        idStr = idStr.substring(0, idStr.length() - 1);
         var parStr = new ArrayList<String>();
         for (var id: ctx.into_stm().into_bracket_list().ID()){
             parStr.add(id.getText());
         }
-        csharp.append("BulkInsert(new ").append(idStr).append("[] {");
+        csharp.append("db.BulkInsert(new ").append(idStr).append("[] {");
         var val_ll = ctx.values_stm().values_list().values_item();
         for (int i=0; i<val_ll.size() - 1; i++){
             csharp.append("\n\tnew ").append(idStr).append(" { ");
@@ -810,6 +817,10 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         tablesAndColumns.get(lastKey).add(ctx.ID().getText());
 
         return builder.append('\n').toString();
+    }
+
+    public String wrapInDb(String colName){
+        return "db.Set<" + colName + ">()";
     }
 }
 
