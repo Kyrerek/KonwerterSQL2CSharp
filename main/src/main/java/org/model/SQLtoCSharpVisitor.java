@@ -788,7 +788,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 case ContraintType.REF -> fk = """ 
                         
                         \t[ForeignKey(nameof(%s))]
-                        \tpublic required virtual %s %sFK {get; set;}
+                        \tpublic virtual %s? %sFK {get; set;}
                         """.formatted(ctx.ID(), c.ID(0), c.ID(0));
             }
         }
