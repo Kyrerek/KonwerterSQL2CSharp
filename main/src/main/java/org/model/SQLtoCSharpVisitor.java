@@ -860,7 +860,13 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                         errors.add("ERROR: Błąd w linii "+cToken.getLine()+":"+cToken.getCharPositionInLine()+". Kolumna \""+ctx.ID()+"\" próbuje zdefiniować wiele ograniczeń DEFAULT!");
                         stmErrors.add("/* ERROR: Błąd w linii "+cToken.getLine()+":"+cToken.getCharPositionInLine()+". Kolumna \""+ctx.ID()+"\" próbuje zdefiniować wiele ograniczeń DEFAULT! */");
                     } else {
-                        defaultVal = visit(c.value());
+                        Token valueToken = c.value().start;
+                        if (correctType(type, c.value().getText())){
+                            defaultVal = visit(c.value());
+                        } else {
+                            errors.add("ERROR: Błąd w linii "+valueToken.getLine()+":"+valueToken.getCharPositionInLine()+". Wartość \""+c.value().getText()+"\" nie jest typu \""+type+"\"!");
+                            stmErrors.add("/* ERROR: Błąd w linii "+valueToken.getLine()+":"+valueToken.getCharPositionInLine()+". Wartość \""+c.value().getText()+"\" nie jest typu \""+type+"\"! */");
+                        }
                     }
                 }
                 case ContraintType.REF -> {
@@ -914,6 +920,30 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         tablesAndColumns.get(lastKey).add(ctx.ID().getText());
 
         return builder.append('\n').toString();
+    }
+
+    private boolean correctType(String type, String value) {
+        if (value == null) return false;
+        String baseType = type.replace("?", "");
+
+        try {
+            return switch (baseType) {
+                case "int" -> {
+                    Integer.parseInt(value);
+                    yield true;
+                }
+                case "decimal" -> {
+                    Double.parseDouble(value.replace(",", "."));
+                    yield true;
+                }
+                case "string" -> value.startsWith("'") && value.endsWith("'");
+                case "bool" -> value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")
+                        || value.equals("1") || value.equals("0");
+                default -> false;
+            };
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public String wrapInDb(String colName){
