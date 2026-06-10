@@ -23,7 +23,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     private Map<String, String> columnsAliases;
     private Map<String, String> tablesAliases;
     private List<String> stmErrors;
-    private Set<String> activeTablesInQuery;
+    private Set<String> selectedCols;
 
     public List<String> getErrors() {
         return errors;
@@ -59,14 +59,6 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         isGrouped = false;
         tablesToJoin = 1;
         prevJoins = new ArrayList<>();
-        activeTablesInQuery = new HashSet<>();
-
-        String baseTable = ctx.from_stm().ID().getFirst().getText();
-        activeTablesInQuery.add(baseTable);
-
-        for (var joinCtx : ctx.join_stm()) {
-            activeTablesInQuery.add(joinCtx.ID().getFirst().getText());
-        }
 
         mainName = visit(ctx.from_stm());
         mainTable = wrapInDb(ctx.from_stm().ID().getFirst().getText());
@@ -107,14 +99,26 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             csharp.append("\n\t.Where(temp => ").append(visit(ctx.having_stm())).append(')');
         }
 
+        if (ctx.order_stm() != null && ctx.groupby_stm() == null) {
+            csharp.append(visit(ctx.order_stm()));
+        }
+
+        selectedCols = new HashSet<>();
         // SELECT
         csharp.append("\n\t.Select(temp => ").append(visit(ctx.select_list())).append(')');
+        if (isGrouped){
+            for (var col : selectedCols){
+                if (!groupedColumns.contains(col)){
+                    errors.add("ERROR: Błąd w linii "+ctx.start.getLine()+". Nie każda kolumna została dodana do klauzauli GROUP BY przy agregacji");
+                    return "/* ERROR: Błąd w linii "+ctx.start.getLine()+". Nie każda kolumna została dodana do klauzauli GROUP BY przy agregacji */";
+                }
+            }
+        }
 
         // DISTINCT
         if (ctx.DISTINCT() != null) csharp.append("\n\t.Distinct()");
 
-        // ORDER BY
-        if (ctx.order_stm() != null) {
+        if (ctx.order_stm() != null && ctx.groupby_stm() != null) {
             csharp.append(visit(ctx.order_stm()));
         }
 
@@ -164,6 +168,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
         if (ctx.column() != null) {
             var col = visit(ctx.column());
+            selectedCols.add(col);
             if (isGrouped && groupedColumns.contains(col)) {
                 if (groupedColumns.size() == 1) return csharp.append(anonName).append(".Key").toString();
                 else return csharp.append(anonName).append(".Key.").append(col).toString();
