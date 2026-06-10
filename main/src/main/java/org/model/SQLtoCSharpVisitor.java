@@ -23,6 +23,8 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     private Map<String, String> columnsAliases;
     private Map<String, String> tablesAliases;
     private List<String> stmErrors;
+    private Set<String> activeTablesInQuery;
+    private String curParent = null;
     private Set<String> selectedCols;
 
     public List<String> getErrors() {
@@ -210,8 +212,13 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             }
             return table + '.' + column;
         }
-
         String column = ctx.getText();
+        var columnToken = ctx.ID().getFirst().getSymbol();
+        System.out.println(curParent + " " + column);
+        if (curParent != null && tablesAndColumns.containsKey(curParent) && !tablesAndColumns.get(curParent).contains(column)){
+            errors.add("ERROR: Błąd w linii "+columnToken.getLine()+":"+columnToken.getCharPositionInLine()+". Kolumna \""+column+"\" nie istnieje w tabeli \""+curParent+"\"!");
+            stmErrors.add("/* ERROR: Błąd w linii "+columnToken.getLine()+":"+columnToken.getCharPositionInLine()+". Kolumna \""+column+"\" nie istnieje w tabeli \""+curParent+"\"! */");
+        }
         return column;
     }
 
@@ -477,10 +484,24 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitDelete_stm(Delete_stmContext ctx) {
-        StringBuilder csharp = new StringBuilder(wrapInDb(ctx.from_stm().ID().getFirst().getText()));
+        String idStr = ctx.from_stm().ID().getFirst().getText();
+        StringBuilder csharp = new StringBuilder(wrapInDb(idStr));
+        stmErrors = new ArrayList<String>();
+
+        curParent = idStr;
+
+        if (!tablesAndColumns.containsKey(idStr)) {
+            errors.add("WARNING: Tabela o nazwie \""+idStr+"\" nie została określona przed linią "+ctx.start.getLine()+". Zalecane jest pierw jej stworzenie.");
+            stmErrors.add("/* WARNING: Tabela o nazwie \""+idStr+"\" nie została jeszcze określona! */");
+        }
 
         if (ctx.getChildCount() == 3) {
             csharp.append("\n\t.Where(temp => ").append(visit(ctx.where_stm())).append(')');
+        }
+
+        curParent = null;
+        if (!stmErrors.isEmpty()) {
+            return String.join("\n", stmErrors);
         }
 
         csharp.append("\n\t.ExecuteDelete()");
@@ -489,12 +510,27 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitUpdate_stm(Update_stmContext ctx) {
-        StringBuilder csharp = new StringBuilder(wrapInDb(ctx.ID().getText()));
+        String idStr = ctx.ID().getText();
+        StringBuilder csharp = new StringBuilder(wrapInDb(idStr));
+
+        stmErrors = new ArrayList<String>();
+        curParent = idStr;
+
+        if (!tablesAndColumns.containsKey(idStr)) {
+            errors.add("WARNING: Tabela o nazwie \""+idStr+"\" nie została określona przed linią "+ctx.start.getLine()+". Zalecane jest pierw jej stworzenie.");
+            stmErrors.add("/* WARNING: Tabela o nazwie \""+idStr+"\" nie została jeszcze określona! */");
+        }
 
         if (ctx.getChildCount() == 4) {
             csharp.append("\n\t.Where(temp => ").append(visit(ctx.where_stm())).append(')');
         }
         csharp.append(visit(ctx.set_stm()));
+
+        curParent = null;
+        if (!stmErrors.isEmpty()) {
+            return String.join("\n", stmErrors);
+        }
+
         return csharp.toString();
     }
 
@@ -516,9 +552,18 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     @Override
     public String visitSet_item(Set_itemContext ctx) {
         var csharp = new StringBuilder();
+        var col = ctx.ID();
+        String colStr = col.getText();
+        var tabStr = ctx.parent.parent.parent.getChild(1).getText();
+        var columnToken = col.getSymbol();
+        if (tablesAndColumns.containsKey(tabStr) && !tablesAndColumns.get(tabStr).contains(colStr)) {
+            errors.add("ERROR: Błąd w linii "+columnToken.getLine()+":"+columnToken.getCharPositionInLine()+". Kolumna \""+colStr+"\" nie istnieje w tabeli \""+tabStr+"\"!");
+            stmErrors.add("/* ERROR: Błąd w linii "+columnToken.getLine()+":"+columnToken.getCharPositionInLine()+". Kolumna \""+colStr+"\" nie istnieje w tabeli \""+tabStr+"\"! */");
+        }
+
         csharp.append("\n\t\t.SetProperty(");
         csharp.append(anonName).append(" => ");
-        csharp.append(anonName).append('.').append(ctx.ID().getText()).append(", ");
+        csharp.append(anonName).append('.').append(colStr).append(", ");
         var child = ctx.getChild(2);
         if (hasColumnInside(child)) {
             csharp.append(anonName).append(" => ");
