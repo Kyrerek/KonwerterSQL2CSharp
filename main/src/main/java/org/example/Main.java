@@ -133,7 +133,8 @@ public class Main {
 
         button.addActionListener(e -> {
             try {
-                textArea.setText(sqlToCSharp(editTxtArea.getText(), errorOrOutArea));
+                String csStr = sqlToCSharp(editTxtArea.getText(), errorOrOutArea);
+                textArea.setText(addExtraCSharp(csStr));
             } catch (Exception ex) {
                 errorOrOutArea.setForeground(Color.RED);
                 errorOrOutArea.setText("Nieoczekiwany błąd: " + ex.getMessage());
@@ -229,50 +230,9 @@ public class Main {
 
 
     public static String runCreateCSharp(String csStr) throws IOException, InterruptedException {
-        //csStr = "Console.WriteLine(\"Hello World!\");";
-        String fullCsStr = """
-    using System.ComponentModel.DataAnnotations;
-    using Microsoft.EntityFrameworkCore;
-    using EFCore.BulkExtensions;
-    using System.Reflection;
-    
-    using var db = new Baza();
-    db.Database.OpenConnection();
-    db.Database.EnsureCreated();
-    """;
-        fullCsStr += csStr;
-        fullCsStr +=  """
-    class Baza : DbContext
-    {
-        protected override void OnConfiguring(DbContextOptionsBuilder o) => o.UseSqlite("Data Source=:memory:");
-    
-        protected override void OnModelCreating(ModelBuilder mb) =>
-            Assembly.GetExecutingAssembly().GetTypes()
-                .Where(t => t.IsClass && t.IsPublic && !t.IsAbstract && !typeof(DbContext).IsAssignableFrom(t))
-                .ToList()
-                .ForEach(t => mb.Entity(t).ToTable(t.Name));
-    }
-    
-    public static class PokazywarkaExtensions
-    {
-        public static void Show<T>(this IQueryable<T> query) where T: class
-        {
-            var dane = query.AsNoTracking().ToList();
-            Console.WriteLine($"\\n--- TABELA: {typeof(T).Name.ToUpper()} (Rekordów: {dane.Count}) ---");
-            
-           
-            var properties = typeof(T).GetProperties();
-    
-            foreach (var element in dane)
-            {
-                var linia = string.Join(", ", properties.Select(p => $"{p.Name}: {p.GetValue(element)}"));
-                Console.WriteLine(linia);
-            }
-        }
-    }
-    """;
+        //csStr = "Console.WriteLine(\"Hello World!\");"
         Path csPath = Paths.get("Template","Program.cs");
-        Files.writeString(csPath,fullCsStr);
+        Files.writeString(csPath,csStr);
         ProcessBuilder pb = new ProcessBuilder("dotnet", "run","--project", "Template");
         pb.redirectErrorStream(true);
 
@@ -294,5 +254,50 @@ public class Main {
         outCs.append(exitCode);
         outCs.append("\n");
         return outCs.toString();
+    }
+
+    public static String addExtraCSharp(String csStr){
+        String fullCsStr = """
+    using System.ComponentModel.DataAnnotations;
+    using Microsoft.EntityFrameworkCore;
+    using EFCore.BulkExtensions;
+    using System.Reflection;
+    
+    using var db = new Baza();
+    db.Database.OpenConnection();
+    db.Database.EnsureCreated();
+    \n""";
+        fullCsStr += csStr;
+        fullCsStr +=  """
+    class Baza : DbContext
+    {
+        protected override void OnConfiguring(DbContextOptionsBuilder o) => o.UseSqlite("Data Source=:memory:");
+    
+        protected override void OnModelCreating(ModelBuilder mb) =>
+            Assembly.GetExecutingAssembly().GetTypes()
+                .Where(t => t.IsClass && t.IsPublic && !t.IsAbstract && !typeof(DbContext).IsAssignableFrom(t))
+                .ToList()
+                .ForEach(t => mb.Entity(t).ToTable(t.Name));
+    }
+    
+    public static class ShowExtensions
+    {
+        public static void Show<T>(this IQueryable<T> query) where T: class
+        {
+            var dane = query.AsNoTracking().ToList();
+            Console.WriteLine($"\\n--- TABELA: {typeof(T).Name.ToUpper()} (Rekordów: {dane.Count}) ---");
+            
+           
+            var properties = typeof(T).GetProperties();
+    
+            foreach (var element in dane)
+            {
+                var linia = string.Join(", ", properties.Select(p => $"{p.Name}: {p.GetValue(element)}"));
+                Console.WriteLine(linia);
+            }
+        }
+    }
+    """;
+        return fullCsStr;
     }
 }
