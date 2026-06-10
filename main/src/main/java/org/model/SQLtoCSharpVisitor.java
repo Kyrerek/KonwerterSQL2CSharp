@@ -804,7 +804,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 .append(" {get; set;}");
         if (defaultVal != null){
             builder.append(" = ")
-                    .append(defaultVal);
+                    .append(defaultVal).append(';');
         }
         if (fk != null){
             builder.append('\n').append(fk);
