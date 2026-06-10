@@ -535,8 +535,15 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         StringBuilder csharp = new StringBuilder();
         var idStr = ctx.into_stm().ID().getText();
         var parStr = new ArrayList<String>();
-        for (var id: ctx.into_stm().into_bracket_list().ID()){
-            parStr.add(id.getText());
+        var cols = ctx.into_stm().into_bracket_list();
+        if (cols != null) {
+            for (var id: ctx.into_stm().into_bracket_list().ID()){
+                parStr.add(id.getText());
+            }
+        }else{
+            if (tablesAndColumns.containsKey(idStr)){
+                parStr.addAll(tablesAndColumns.get(idStr));
+            }
         }
         csharp.append("db.BulkInsert(new ").append(idStr).append("[] {");
         var val_ll = ctx.values_stm().values_list().values_item();
