@@ -38,63 +38,63 @@ public class Main {
         editTxtArea.setCodeFoldingEnabled(true);
         editTxtArea.setTabSize(4);
 
-//        String sqlStr = """
-//        SELECT DISTINCT name, age FROM users WHERE (age > 18 AND age is NOT NULL) or name NOT LIKE '%_OO%' and age BETWEEN 10 AND 100;
-//        SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept;
-//        SELECT e.DeptId FROM Employees AS e JOIN Departments AS d ON e.DeptId = d.Id;
-//        SELECT e.DeptId FROM Employees AS e LEFT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;
-//        SELECT e.DeptId FROM Employees AS e RIGHT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;
-//        SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept ORDER BY average DESC, Dept;
-//        DELETE FROM users WHERE name LIKE '%ki%' and age NOT BETWEEN 20 AND 50;
-//        UPDATE users
-//        SET age = age * 1.10, name = 'UNKNOWN', country = NULL
-//        WHERE name LIKE '%____%';
-//        INSERT INTO Users (name,age,country,code)
-//        VALUES
-//        ('User1', 10, 'Norway'),
-//        ('Per Olsen', 20, NULL),
-//        ('Finn Egan', 50, 'Poland');
-//        SELECT a.Name, b.Price, c.Category
-//        FROM TableA AS a
-//        JOIN TableB AS b ON a.Id = b.AId
-//        JOIN TableC AS c ON b.Id = c.BId
-//        JOIN TableD AS d ON d.BId = a.Id;
-//        SELECT a.Name, b.Price, c.Category
-//        FROM TableA AS a
-//        LEFT JOIN TableB AS b ON a.Id = b.AId
-//        LEFT JOIN TableC AS c ON b.Id = c.BId
-//        LEFT JOIN TableD AS d ON d.BId = a.Id;
-//        CREATE TABLE Departments (
-//            Id INT PRIMARY KEY
-//        );
-//        CREATE TABLE Employees (
-//            Id INT PRIMARY KEY,
-//            Username VARCHAR(50) NOT NULL UNIQUE,
-//            Salary DECIMAL DEFAULT 3000.00 UNIQUE,
-//            IsActive BOOLEAN DEFAULT TRUE,
-//            DeptId INT REFERENCES Departments(Id)
-//        );
-//        """;
-
         String sqlStr = """
-                CREATE TABLE uzytkownicy (
-                    id INT PRIMARY KEY,
-                    imie VARCHAR(50),
-                    wiek INT
-                );
-                INSERT INTO uzytkownicy (id, imie, wiek) VALUES (1, 'Anna', 25);
-                INSERT INTO uzytkownicy (id, imie, wiek) VALUES (2, 'Jan', 30);
+        SELECT DISTINCT name, age FROM users WHERE (age > 18 AND age is NOT NULL) or name NOT LIKE '%_OO%' and age BETWEEN 10 AND 100;
+        SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept;
+        SELECT e.DeptId FROM Employees AS e JOIN Departments AS d ON e.DeptId = d.Id;
+        SELECT e.DeptId FROM Employees AS e LEFT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;
+        SELECT e.DeptId FROM Employees AS e RIGHT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;
+        SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept ORDER BY average DESC, Dept;
+        DELETE FROM users WHERE name LIKE '%ki%' and age NOT BETWEEN 20 AND 50;
+        UPDATE users
+        SET age = age * 1.10, name = 'UNKNOWN', country = NULL
+        WHERE name LIKE '%____%';
+        INSERT INTO Users (name,age,country,code)
+        VALUES
+        ('User1', 10, 'Norway'),
+        ('Per Olsen', 20, NULL),
+        ('Finn Egan', 50, 'Poland');
+        SELECT a.Name, b.Price, c.Category
+        FROM TableA AS a
+        JOIN TableB AS b ON a.Id = b.AId
+        JOIN TableC AS c ON b.Id = c.BId
+        JOIN TableD AS d ON d.BId = a.Id;
+        SELECT a.Name, b.Price, c.Category
+        FROM TableA AS a
+        LEFT JOIN TableB AS b ON a.Id = b.AId
+        LEFT JOIN TableC AS c ON b.Id = c.BId
+        LEFT JOIN TableD AS d ON d.BId = a.Id;
+        CREATE TABLE Departments (
+            Id INT PRIMARY KEY
+        );
+        CREATE TABLE Employees (
+            Id INT PRIMARY KEY,
+            Username VARCHAR(50) NOT NULL UNIQUE,
+            Salary DECIMAL DEFAULT 3000.00 UNIQUE,
+            IsActive BOOLEAN DEFAULT TRUE,
+            DeptId INT REFERENCES Departments(Id)
+        );
+        """;
 
-                SELECT * FROM uzytkownicy;
-
-                UPDATE uzytkownicy SET wiek = 26 WHERE id = 1;
-
-                SELECT * FROM uzytkownicy;
-
-                DELETE FROM uzytkownicy WHERE id = 2;
-
-                SELECT * FROM uzytkownicy;
-                """;
+//        String sqlStr = """
+//                CREATE TABLE uzytkownicy (
+//                    id INT PRIMARY KEY,
+//                    imie VARCHAR(50),
+//                    wiek INT
+//                );
+//                INSERT INTO uzytkownicy (id, imie, wiek) VALUES (1, 'Anna', 25);
+//                INSERT INTO uzytkownicy (id, imie, wiek) VALUES (2, 'Jan', 30);
+//
+//                SELECT * FROM uzytkownicy;
+//
+//                UPDATE uzytkownicy SET wiek = 26 WHERE id = 1;
+//
+//                SELECT * FROM uzytkownicy;
+//
+//                DELETE FROM uzytkownicy WHERE id = 2;
+//
+//                SELECT * FROM uzytkownicy;
+//                """;
         editTxtArea.setText(sqlStr);
 
         RTextScrollPane editScrollP = new RTextScrollPane(editTxtArea);
@@ -133,10 +133,10 @@ public class Main {
 
         button.addActionListener(e -> {
             try {
+                errorOrOutArea.setForeground(Color.RED);
                 String csStr = sqlToCSharp(editTxtArea.getText(), errorOrOutArea);
                 textArea.setText(addExtraCSharp(csStr));
             } catch (Exception ex) {
-                errorOrOutArea.setForeground(Color.RED);
                 errorOrOutArea.setText("Nieoczekiwany błąd: " + ex.getMessage());
             }
         });
