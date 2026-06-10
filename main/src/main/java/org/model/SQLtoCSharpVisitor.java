@@ -44,7 +44,6 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         }
         csharp.append(actions.toString());
         csharp.append(creations.toString());
-        System.out.println(tablesAndColumns);
         return csharp.toString();
     }
 
@@ -747,13 +746,23 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     private List<String> uniqueList;
     @Override
     public String visitCreate_stm(SQLParser.Create_stmContext ctx){
+        stmErrors = new ArrayList<>();
+        String tableName = ctx.ID().toString();
+        Token tableToken = ctx.ID().getSymbol();
+        if (tablesAndColumns.containsKey(tableName)){
+            errors.add("ERROR: Błąd w linii "+tableToken.getLine()+":"+tableToken.getCharPositionInLine()+". Tabela \""+tableName+"\" już istnieje!");
+            return  "/* ERROR: Błąd w linii "+tableToken.getLine()+":"+tableToken.getCharPositionInLine()+". Tabela \""+tableName+"\" już istnieje! */";
+        }
         tablesAndColumns.put(ctx.ID().getText(), new ArrayList<>());
         uniqueList =  new ArrayList<>();
         StringBuilder str = new StringBuilder("public class " +
-                ctx.ID() +
+                tableName +
                 "\n{" +
                 visit(ctx.create_list()) +
                 '}');
+        if (!stmErrors.isEmpty()){
+            return String.join("\n", stmErrors);
+        }
         for (var u : uniqueList){
             str.insert(0, "[Index(nameof(" + u + "), IsUnique = true)]\n");
         }
@@ -790,6 +799,16 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
 
     @Override
     public String visitCreate_element(SQLParser.Create_elementContext ctx){
+        String lastKey = null;
+        for (var key : tablesAndColumns.keySet()){
+            lastKey = key;
+        }
+        if (tablesAndColumns.get(lastKey).contains(ctx.ID().getText())){
+            Token colToken = ctx.ID().getSymbol();
+            errors.add("ERROR: Błąd w linii "+colToken.getLine()+":"+colToken.getCharPositionInLine()+". Tabela \""+lastKey+"\" ma już kolumne \""+ctx.ID().getText()+"\"!");
+            stmErrors.add("/* ERROR: Błąd w linii "+colToken.getLine()+":"+colToken.getCharPositionInLine()+". Tabela \""+lastKey+"\" ma już kolumne \""+ctx.ID().getText()+"\"! */");
+        }
+
         StringBuilder builder = new StringBuilder();
         String type = getDataType(ctx.data_type());
         boolean isNullable = true;
@@ -808,11 +827,26 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                     isNullable = false;
                 }
                 case ContraintType.DEFAULT -> defaultVal = visit(c.value());
-                case ContraintType.REF -> fk = """ 
+                case ContraintType.REF -> {
+                    String refTable = c.ID(0).toString();
+                    Token refToken = c.ID(0).getSymbol();
+                    String refCol = c.ID(1).getText();
+                    Token refColToken = c.ID(1).getSymbol();
+                    if (!tablesAndColumns.containsKey(refTable)){
+                        errors.add("ERROR: Błąd w linii "+refToken.getLine()+":"+refToken.getCharPositionInLine()+". Tabela \""+refTable+"\" nie istnieje, więc nie można się do niej odwołać!");
+                        stmErrors.add("/* ERROR: Błąd w linii "+refToken.getLine()+":"+refToken.getCharPositionInLine()+". Tabela \""+refTable+"\" nie istnieje, więc nie można się do niej odwołać! */");
+                    } else if (!tablesAndColumns.get(refTable).contains(refCol)){
+                        System.out.println(tablesAndColumns);
+                        errors.add("ERROR: Błąd w linii "+refColToken.getLine()+":"+refColToken.getCharPositionInLine()+". Kolumna \""+refCol+"\" nie istnieje w tabeli \""+refTable+"\"!");
+                        stmErrors.add("/* ERROR: Błąd w linii "+refColToken.getLine()+":"+refColToken.getCharPositionInLine()+". Kolumna \""+refCol+"\" nie istnieje w tabeli \""+refTable+"\"! */");
+                    }
+
+                    fk = """ 
                         
                         \t[ForeignKey(nameof(%s))]
                         \tpublic virtual %s? %sFK {get; set;}
                         """.formatted(ctx.ID(), c.ID(0), c.ID(0));
+                }
             }
         }
         if (!isNullable){
@@ -837,10 +871,6 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             builder.append('\n').append(fk);
         }
 
-        String lastKey = null;
-        for (var key : tablesAndColumns.keySet()){
-            lastKey = key;
-        }
         tablesAndColumns.get(lastKey).add(ctx.ID().getText());
 
         return builder.append('\n').toString();
