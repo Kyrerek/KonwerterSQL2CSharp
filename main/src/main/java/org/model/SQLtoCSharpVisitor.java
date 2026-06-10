@@ -176,7 +176,14 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 else return csharp.append(anonName).append(".Key.").append(col).toString();
             }
             csharp.append(anonName).append('.').append(col);
-        } else if (ctx.agg_func() != null) csharp.append(visit(ctx.agg_func()));
+        } else if (ctx.agg_func() != null) {
+            String aggResult = visit(ctx.agg_func());
+            if (ctx.AS() != null) {
+                csharp.append(aggResult.substring(aggResult.indexOf(" = ") + 3));
+            } else {
+                csharp.append(aggResult);
+            }
+        }
 
         return csharp.toString();
     }
@@ -200,7 +207,9 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                     stmErrors.add("/* ERROR: Błąd w linii "+columnToken.getLine()+":"+columnToken.getCharPositionInLine()+". Kolumna \""+column+"\" nie istnieje w tabeli \""+checkTable+"\"! */");
                 }
             }
-
+            if (tablesToJoin == 1) {
+                return column;
+            }
             return table + '.' + column;
         }
         String column = ctx.getText();
@@ -217,15 +226,11 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     public String visitAgg_func(SQLParser.Agg_funcContext ctx) {
         String col = ctx.column() != null ? visit(ctx.column()) : "";
 
-        if (ctx.MIN() != null) return anonName + ".Min(s => s." + col + ")";
-
-        if (ctx.MAX() != null) return anonName + ".Max(s => s." + col + ")";
-
-        if (ctx.COUNT() != null) return anonName + ".Count()";
-
-        if (ctx.SUM() != null) return anonName + ".Sum(s => s." + col + ")";
-
-        if (ctx.AVG() != null) return anonName + ".Average(s => s." + col + ")";
+        if (ctx.MIN() != null) return "Min = " + anonName + ".Min(s => s." + col + ")";
+        if (ctx.MAX() != null) return "Max = " + anonName + ".Max(s => s." + col + ")";
+        if (ctx.COUNT() != null) return "Count = " + anonName + ".Count()";
+        if (ctx.SUM() != null) return "Sum = " + anonName + ".Sum(s => s." + col + ")";
+        if (ctx.AVG() != null) return "Avg = " + anonName + ".Average(s => s." + col + ")";
 
         return null;
     }
@@ -785,19 +790,34 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 int termType = termChild.getSymbol().getType();
                 if (termType == STR) {
                     csharp.append(csharpStr(termChild.getText()));
-                }else if (termType == NUM || termType == INT) {
+                } else if (termType == NUM || termType == INT) {
                     csharp.append(termChild.getText());
                 } else {
                     csharp.append(SymbolMapper.getSymbolsMap().get(termType));
                 }
             } else if (child instanceof ParserRuleContext logicChild) {
-                if (logicChild instanceof SQLParser.ColumnContext childColTxt) {
-                    csharp.append(anonName + ".");
+                if (logicChild instanceof SQLParser.Agg_funcContext) {
+                    csharp.append(visitAgg_func_raw((SQLParser.Agg_funcContext) logicChild));
+                } else {
+                    if (logicChild instanceof SQLParser.ColumnContext) {
+                        csharp.append(anonName).append(".");
+                    }
+                    csharp.append(visit(logicChild));
                 }
-                csharp.append(visit(logicChild));
             }
         }
         return csharp.toString();
+    }
+    private String visitAgg_func_raw(SQLParser.Agg_funcContext ctx) {
+        String col = ctx.column() != null ? visit(ctx.column()) : "";
+
+        if (ctx.MIN() != null) return anonName + ".Min(s => s." + col + ")";
+        if (ctx.MAX() != null) return anonName + ".Max(s => s." + col + ")";
+        if (ctx.COUNT() != null) return anonName + ".Count()";
+        if (ctx.SUM() != null) return anonName + ".Sum(s => s." + col + ")";
+        if (ctx.AVG() != null) return anonName + ".Average(s => s." + col + ")";
+
+        return "";
     }
 
     public String csharpStr(String sqlStr){
