@@ -1,6 +1,11 @@
 plugins {
     id 'java'
-    id "antlr"
+    id 'antlr'
+    id 'application'
+}
+
+application {
+    mainClass = 'org.example.Main'
 }
 
 group = 'org.example'
