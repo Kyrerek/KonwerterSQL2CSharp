@@ -38,63 +38,75 @@ public class Main {
         editTxtArea.setCodeFoldingEnabled(true);
         editTxtArea.setTabSize(4);
 
-        String sqlStr = """
-        SELECT DISTINCT name, age FROM users WHERE (age > 18 AND age is NOT NULL) or name NOT LIKE '%_OO%' and age BETWEEN 10 AND 100;
-        SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept;
-        SELECT e.DeptId FROM Employees AS e JOIN Departments AS d ON e.DeptId = d.Id;
-        SELECT e.DeptId FROM Employees AS e LEFT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;
-        SELECT e.DeptId FROM Employees AS e RIGHT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;
-        SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept ORDER BY average DESC, Dept;
-        DELETE FROM users WHERE name LIKE '%ki%' and age NOT BETWEEN 20 AND 50;
-        UPDATE users
-        SET age = age * 1.10, name = 'UNKNOWN', country = NULL
-        WHERE name LIKE '%____%';
-        INSERT INTO Users (name,age,country,code)
-        VALUES
-        ('User1', 10, 'Norway'),
-        ('Per Olsen', 20, NULL),
-        ('Finn Egan', 50, 'Poland');
-        SELECT a.Name, b.Price, c.Category
-        FROM TableA AS a
-        JOIN TableB AS b ON a.Id = b.AId
-        JOIN TableC AS c ON b.Id = c.BId
-        JOIN TableD AS d ON d.BId = a.Id;
-        SELECT a.Name, b.Price, c.Category
-        FROM TableA AS a
-        LEFT JOIN TableB AS b ON a.Id = b.AId
-        LEFT JOIN TableC AS c ON b.Id = c.BId
-        LEFT JOIN TableD AS d ON d.BId = a.Id;
-        CREATE TABLE Departments (
-            Id INT PRIMARY KEY
-        );
-        CREATE TABLE Employees (
-            Id INT PRIMARY KEY,
-            Username VARCHAR(50) NOT NULL UNIQUE,
-            Salary DECIMAL DEFAULT 3000.00 UNIQUE,
-            IsActive BOOLEAN DEFAULT TRUE,
-            DeptId INT REFERENCES Departments(Id)
-        );
-        """;
-
 //        String sqlStr = """
-//                CREATE TABLE uzytkownicy (
-//                    id INT PRIMARY KEY,
-//                    imie VARCHAR(50),
-//                    wiek INT
-//                );
-//                INSERT INTO uzytkownicy (id, imie, wiek) VALUES (1, 'Anna', 25);
-//                INSERT INTO uzytkownicy (id, imie, wiek) VALUES (2, 'Jan', 30);
-//
-//                SELECT * FROM uzytkownicy;
-//
-//                UPDATE uzytkownicy SET wiek = 26 WHERE id = 1;
-//
-//                SELECT * FROM uzytkownicy;
-//
-//                DELETE FROM uzytkownicy WHERE id = 2;
-//
-//                SELECT * FROM uzytkownicy;
-//                """;
+//        SELECT DISTINCT name, age FROM users WHERE (age > 18 AND age is NOT NULL) or name NOT LIKE '%_OO%' and age BETWEEN 10 AND 100;
+//        SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept;
+//        SELECT e.DeptId FROM Employees AS e JOIN Departments AS d ON e.DeptId = d.Id;
+//        SELECT e.DeptId FROM Employees AS e LEFT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;
+//        SELECT e.DeptId FROM Employees AS e RIGHT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;
+//        SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept ORDER BY average DESC, Dept;
+//        DELETE FROM users WHERE name LIKE '%ki%' and age NOT BETWEEN 20 AND 50;
+//        UPDATE users
+//        SET age = age * 1.10, name = 'UNKNOWN', country = NULL
+//        WHERE name LIKE '%____%';
+//        INSERT INTO Users (name,age,country,code)
+//        VALUES
+//        ('User1', 10, 'Norway'),
+//        ('Per Olsen', 20, NULL),
+//        ('Finn Egan', 50, 'Poland');
+//        SELECT a.Name, b.Price, c.Category
+//        FROM TableA AS a
+//        JOIN TableB AS b ON a.Id = b.AId
+//        JOIN TableC AS c ON b.Id = c.BId
+//        JOIN TableD AS d ON d.BId = a.Id;
+//        SELECT a.Name, b.Price, c.Category
+//        FROM TableA AS a
+//        LEFT JOIN TableB AS b ON a.Id = b.AId
+//        LEFT JOIN TableC AS c ON b.Id = c.BId
+//        LEFT JOIN TableD AS d ON d.BId = a.Id;
+//        CREATE TABLE Departments (
+//            Id INT PRIMARY KEY
+//        );
+//        CREATE TABLE Employees (
+//            Id INT PRIMARY KEY,
+//            Username VARCHAR(50) NOT NULL UNIQUE,
+//            Salary DECIMAL DEFAULT 3000.00 UNIQUE,
+//            IsActive BOOLEAN DEFAULT TRUE,
+//            DeptId INT REFERENCES Departments(Id)
+//        );
+//        """;
+
+        String sqlStr = """
+                CREATE TABLE Users (
+                    Id INT PRIMARY KEY,
+                    Name VARCHAR(50) NOT NULL,
+                    Age INT NOT NULL
+                );
+                
+                CREATE TABLE Orders (
+                    Id INT PRIMARY KEY,
+                    Product VARCHAR(100) NOT NULL,
+                    Price DECIMAL NOT NULL,
+                    UserId INT REFERENCES Users(Id)
+                );
+                
+                INSERT INTO Users (Id, Name, Age) VALUES (1, 'Anna', 25);
+                INSERT INTO Users (Id, Name, Age) VALUES (2, 'Jan', 30);
+                
+                INSERT INTO Orders (Id, Product, Price, UserId) VALUES (101, 'Laptop', 3500, 1);
+                INSERT INTO Orders (Id, Product, Price, UserId) VALUES (102, 'Telefon', 1500, 2);
+                
+                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId;
+                
+                UPDATE Users SET Age = 26 WHERE Id = 1;
+                
+                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId;
+                
+                DELETE FROM Orders WHERE UserId = 2;
+                DELETE FROM Users WHERE Id = 2;
+                
+                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId;
+                """;
         editTxtArea.setText(sqlStr);
 
         RTextScrollPane editScrollP = new RTextScrollPane(editTxtArea);
@@ -263,6 +275,7 @@ public class Main {
     using System.ComponentModel.DataAnnotations.Schema;
     using EFCore.BulkExtensions;
     using System.Reflection;
+    using System.Globalization;
     
     using var db = new Baza();
     db.Database.OpenConnection();
@@ -286,18 +299,51 @@ public class Main {
         public static void Show<T>(this IQueryable<T> query) where T: class
         {
             var dane = query.AsNoTracking().ToList();
-            Console.WriteLine($"\\n--- TABELA: {typeof(T).Name.ToUpper()} (Rekordów: {dane.Count}) ---");
-            
-           
+    
+            Console.WriteLine($"\\n--- WYNIK ZAPYTANIA (Rekordów: {dane.Count}) ---");
+    
             var properties = typeof(T).GetProperties();
     
             foreach (var element in dane)
             {
-                var linia = string.Join(", ", properties.Select(p => $"{p.Name}: {p.GetValue(element)}"));
-                Console.WriteLine(linia);
+                var kolumny = new List<string>();
+    
+                foreach (var p in properties)
+                {
+                    var val = p.GetValue(element);
+                    if (val == null) continue;
+    
+                    var type = val.GetType();
+    
+                    if (type.IsClass && type != typeof(string))
+                    {
+                        var subProps = type.GetProperties()
+                            .Where(sp => sp.PropertyType.IsPrimitive || sp.PropertyType == typeof(string) || sp.PropertyType == typeof(decimal));
+    
+                        foreach (var sp in subProps)
+                        {
+                            var subVal = sp.GetValue(val);
+                            var formattedSubVal = subVal is IFormattable formattableSub
+                                ? formattableSub.ToString(null, CultureInfo.InvariantCulture)
+                                : subVal?.ToString();
+    
+                            kolumny.Add($"{sp.Name}: {formattedSubVal}");
+                        }
+                    }
+                    else
+                    {
+                        var formattedVal = val is IFormattable formattable
+                            ? formattable.ToString(null, CultureInfo.InvariantCulture)
+                            : val.ToString();
+    
+                        kolumny.Add($"{p.Name}: {formattedVal}");
+                    }
+                }
+                Console.WriteLine(string.Join(", ", kolumny));
             }
         }
     }
+    
     """;
         return fullCsStr;
     }
