@@ -260,6 +260,7 @@ public class Main {
         String fullCsStr = """
     using System.ComponentModel.DataAnnotations;
     using Microsoft.EntityFrameworkCore;
+    using System.ComponentModel.DataAnnotations.Schema;
     using EFCore.BulkExtensions;
     using System.Reflection;
     

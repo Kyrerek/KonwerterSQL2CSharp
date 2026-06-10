@@ -243,6 +243,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             warnings.add("/* WARNING: Tabela o nazwie \""+joinTable+"\" nie została jeszcze określona! */\n");
         }
         String joinName = joinTable;
+        joinTable = wrapInDb(joinTable);
         if (ctx.AS() != null){
             joinName = ctx.ID().get(1).getText();
             Token aliasToken = ctx.ID().get(1).getSymbol();
@@ -787,7 +788,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 case ContraintType.REF -> fk = """ 
                         
                         \t[ForeignKey(nameof(%s))]
-                        \tpublic virtual %s %sFK {get; set;}
+                        \tpublic required virtual %s %sFK {get; set;}
                         """.formatted(ctx.ID(), c.ID(0), c.ID(0));
             }
         }
@@ -805,6 +806,10 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         if (defaultVal != null){
             builder.append(" = ")
                     .append(defaultVal);
+            if (type.contains("decimal")){
+                builder.append("m");
+            }
+            builder.append(";");
         }
         if (fk != null){
             builder.append('\n').append(fk);
@@ -815,7 +820,6 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             lastKey = key;
         }
         tablesAndColumns.get(lastKey).add(ctx.ID().getText());
-
         return builder.append('\n').toString();
     }
 
