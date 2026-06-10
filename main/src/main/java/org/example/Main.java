@@ -84,15 +84,15 @@ public class Main {
                 );
                 INSERT INTO uzytkownicy (id, imie, wiek) VALUES (1, 'Anna', 25);
                 INSERT INTO uzytkownicy (id, imie, wiek) VALUES (2, 'Jan', 30);
-                
+
                 SELECT * FROM uzytkownicy;
-                
+
                 UPDATE uzytkownicy SET wiek = 26 WHERE id = 1;
-                
+
                 SELECT * FROM uzytkownicy;
-                
+
                 DELETE FROM uzytkownicy WHERE id = 2;
-                
+
                 SELECT * FROM uzytkownicy;
                 """;
         editTxtArea.setText(sqlStr);

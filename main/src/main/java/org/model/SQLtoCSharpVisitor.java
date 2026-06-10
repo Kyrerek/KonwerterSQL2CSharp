@@ -33,17 +33,17 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     public String visitQuery(SQLParser.QueryContext ctx) {
         StringBuilder csharp = new StringBuilder();
 
-        var creations = new ArrayList<SQLParser.Create_stmContext>();
+        StringBuilder creations = new StringBuilder();
+        StringBuilder actions = new StringBuilder();
         for (var query : ctx.operation()) {
             if (query.children.getFirst() instanceof SQLParser.Create_stmContext ) {
-                creations.add((SQLParser.Create_stmContext)query.children.getFirst());
+                creations.append(visit(query)).append("\n\n");
             }else {
-                csharp.append(visit(query)).append(";\n\n");
+                actions.append(visit(query)).append(";\n\n");
             }
         }
-        for (var stm : creations){
-            csharp.append(visit(stm)).append("\n\n");
-        }
+        csharp.append(actions.toString());
+        csharp.append(creations.toString());
         System.out.println(tablesAndColumns);
         return csharp.toString();
     }
