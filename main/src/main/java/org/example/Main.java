@@ -91,12 +91,16 @@ public class Main {
                 );
                 
                 INSERT INTO Users (Id, Name, Age) VALUES (1, 'Anna', 25);
-                INSERT INTO Users (Id, Name, Age) VALUES (2, 'Jan', 30);
+                INSERT INTO Users VALUES (2, 'Jan', 30);
                 
                 INSERT INTO Orders (Id, Product, Price, UserId) VALUES (101, 'Laptop', 3500, 1);
                 INSERT INTO Orders (Id, Product, Price, UserId) VALUES (102, 'Telefon', 1500, 2);
                 
-                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId;
+                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId WHERE o.Price > 2000;
+                
+                SELECT DISTINCT UserId FROM Orders;
+                
+                SELECT u.Id FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId ORDER by u.Age DESc;
                 
                 UPDATE Users SET Age = 26 WHERE Id = 1;
                 
@@ -294,56 +298,83 @@ public class Main {
                 .ForEach(t => mb.Entity(t).ToTable(t.Name));
     }
     
+    
     public static class ShowExtensions
     {
-        public static void Show<T>(this IQueryable<T> query) where T: class
+        public static void Show<T>(this IQueryable<T> query)
         {
-            var dane = query.AsNoTracking().ToList();
+            List<T> dane;
+            if (typeof(T).IsClass && typeof(T) != typeof(string))
+            {
+                dane = EntityFrameworkQueryableExtensions.AsNoTracking((IQueryable<object>)query).Cast<T>().ToList();
+            }
+            else
+            {
+                dane = query.ToList();
+            }
     
             Console.WriteLine($"\\n--- WYNIK ZAPYTANIA (Rekordów: {dane.Count}) ---");
     
-            var properties = typeof(T).GetProperties();
+            var mainType = typeof(T);
     
-            foreach (var element in dane)
+            if (mainType.IsPrimitive || mainType == typeof(string) || mainType == typeof(decimal) ||\s
+                (Nullable.GetUnderlyingType(mainType)?.IsPrimitive == true))
             {
-                var kolumny = new List<string>();
-    
-                foreach (var p in properties)
+                foreach (var element in dane)
                 {
-                    var val = p.GetValue(element);
-                    if (val == null) continue;
+                    if (element == null) continue;
     
-                    var type = val.GetType();
+                    var formattedVal = element is IFormattable formattable
+                        ? formattable.ToString(null, CultureInfo.InvariantCulture)
+                        : element.ToString();
     
-                    if (type.IsClass && type != typeof(string))
+                    Console.WriteLine(formattedVal);
+                }
+            }
+            else
+            {
+                var properties = mainType.GetProperties();
+    
+                foreach (var element in dane)
+                {
+                    var kolumny = new List<string>();
+    
+                    foreach (var p in properties)
                     {
-                        var subProps = type.GetProperties()
-                            .Where(sp => sp.PropertyType.IsPrimitive || sp.PropertyType == typeof(string) || sp.PropertyType == typeof(decimal));
+                        var val = p.GetValue(element);
+                        if (val == null) continue;
     
-                        foreach (var sp in subProps)
+                        var type = val.GetType();
+    
+                        if (type.IsClass && type != typeof(string))
                         {
-                            var subVal = sp.GetValue(val);
-                            var formattedSubVal = subVal is IFormattable formattableSub
-                                ? formattableSub.ToString(null, CultureInfo.InvariantCulture)
-                                : subVal?.ToString();
+                            var subProps = type.GetProperties()
+                                .Where(sp => sp.PropertyType.IsPrimitive || sp.PropertyType == typeof(string) || sp.PropertyType == typeof(decimal));
     
-                            kolumny.Add($"{sp.Name}: {formattedSubVal}");
+                            foreach (var sp in subProps)
+                            {
+                                var subVal = sp.GetValue(val);
+                                var formattedSubVal = subVal is IFormattable formattableSub
+                                    ? formattableSub.ToString(null, CultureInfo.InvariantCulture)
+                                    : subVal?.ToString();
+    
+                                kolumny.Add($"{sp.Name}: {formattedSubVal}");
+                            }
+                        }
+                        else
+                        {
+                            var formattedVal = val is IFormattable formattable
+                                ? formattable.ToString(null, CultureInfo.InvariantCulture)
+                                : val.ToString();
+    
+                            kolumny.Add($"{p.Name}: {formattedVal}");
                         }
                     }
-                    else
-                    {
-                        var formattedVal = val is IFormattable formattable
-                            ? formattable.ToString(null, CultureInfo.InvariantCulture)
-                            : val.ToString();
-    
-                        kolumny.Add($"{p.Name}: {formattedVal}");
-                    }
+                    Console.WriteLine(string.Join(", ", kolumny));
                 }
-                Console.WriteLine(string.Join(", ", kolumny));
             }
         }
     }
-    
     """;
         return fullCsStr;
     }
