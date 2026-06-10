@@ -38,7 +38,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         StringBuilder creations = new StringBuilder();
         StringBuilder actions = new StringBuilder();
         for (var query : ctx.operation()) {
-            if (query.children.getFirst() instanceof SQLParser.Create_stmContext ) {
+            if (query.children.getFirst() instanceof SQLParser.Create_stmContext) {
                 creations.append(visit(query)).append("\n\n");
             }else {
                 actions.append(visit(query)).append(";\n\n");
@@ -617,7 +617,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             return String.join("\n", warnErr);
         }
 
-        csharp.append("db.BulkInsert(new ").append(idStr).append("[] {");
+        csharp.append("db.AddRange(new ").append(idStr).append("[] {");
         var val_ll = ctx.values_stm().values_list().values_item();
         for (int i=0; i<val_ll.size() - 1; i++){
             csharp.append("\n\tnew ").append(idStr).append(" { ");
@@ -629,7 +629,9 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         var val_l = val_ll.getLast().values_item_list().value();
         fillInsideInsert(csharp,val_l,parStr);
         csharp.append("}");
-        csharp.append("\n})");
+        csharp.append("\n});");
+        csharp.append("\n");
+        csharp.append("db.SaveChanges()");
         return csharp.toString();
     }
 
