@@ -193,41 +193,41 @@ DELETE FROM Customers WHERE Id = 3;
 SELECT * FROM Customers;
 
                 """;
-        String sqlStr = """
-                CREATE TABLE Users (
-                    Id INT PRIMARY KEY,
-                    Name VARCHAR(50) NOT NULL,
-                    Age INT NOT NULL
-                );
-                
-                CREATE TABLE Orders (
-                    Id INT PRIMARY KEY,
-                    Product VARCHAR(100) NOT NULL,
-                    Price DECIMAL NOT NULL,
-                    UserId INT REFERENCES Users(Id)
-                );
-                
-                INSERT INTO Users (Id, Name, Age) VALUES (1, 'Anna', 25);
-                INSERT INTO Users VALUES (2, 'Jan', 30);
-                
-                INSERT INTO Orders (Id, Product, Price, UserId) VALUES (101, 'Laptop', 3500, 1);
-                INSERT INTO Orders (Id, Product, Price, UserId) VALUES (102, 'Telefon', 1500, 2);
-                
-                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId WHERE o.Price > 2000;
-                
-                SELECT DISTINCT UserId FROM Orders;
-                
-                SELECT u.Id FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId ORDER by u.Age DESc;
-                
-                UPDATE Users SET Age = 26 WHERE Id = 1;
-                
-                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId;
-                
-                DELETE FROM Orders WHERE UserId = 2;
-                DELETE FROM Users WHERE Id = 2;
-                
-                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId;
-                """;
+//        String sqlStr = """
+//                CREATE TABLE Users (
+//                    Id INT PRIMARY KEY,
+//                    Name VARCHAR(50) NOT NULL,
+//                    Age INT NOT NULL
+//                );
+//
+//                CREATE TABLE Orders (
+//                    Id INT PRIMARY KEY,
+//                    Product VARCHAR(100) NOT NULL,
+//                    Price DECIMAL NOT NULL,
+//                    UserId INT REFERENCES Users(Id)
+//                );
+//
+//                INSERT INTO Users (Id, Name, Age) VALUES (1, 'Anna', 25);
+//                INSERT INTO Users VALUES (2, 'Jan', 30);
+//
+//                INSERT INTO Orders (Id, Product, Price, UserId) VALUES (101, 'Laptop', 3500, 1);
+//                INSERT INTO Orders (Id, Product, Price, UserId) VALUES (102, 'Telefon', 1500, 2);
+//
+//                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId WHERE o.Price > 2000;
+//
+//                SELECT DISTINCT UserId FROM Orders;
+//
+//                SELECT u.Id FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId ORDER by u.Age DESc;
+//
+//                UPDATE Users SET Age = 26 WHERE Id = 1;
+//
+//                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId;
+//
+//                DELETE FROM Orders WHERE UserId = 2;
+//                DELETE FROM Users WHERE Id = 2;
+//
+//                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId;
+//                """;
         editTxtArea.setText(fullTest);
 
         RTextScrollPane editScrollP = new RTextScrollPane(editTxtArea);
@@ -394,7 +394,6 @@ SELECT * FROM Customers;
     using System.ComponentModel.DataAnnotations;
     using Microsoft.EntityFrameworkCore;
     using System.ComponentModel.DataAnnotations.Schema;
-    using EFCore.BulkExtensions;
     using System.Reflection;
     using System.Globalization;
     
@@ -406,13 +405,39 @@ SELECT * FROM Customers;
         fullCsStr +=  """
     class Baza : DbContext
     {
-        protected override void OnConfiguring(DbContextOptionsBuilder o) => o.UseSqlite("Data Source=:memory:");
+        private static Microsoft.Data.Sqlite.SqliteConnection? _connection;
     
-        protected override void OnModelCreating(ModelBuilder mb) =>
+        protected override void OnConfiguring(DbContextOptionsBuilder o)
+        {
+            if (_connection == null)
+            {
+                _connection = new Microsoft.Data.Sqlite.SqliteConnection("Data Source=:memory:");
+                _connection.Open();
+            }
+            o.UseSqlite(_connection);
+        }
+    
+        protected override void OnModelCreating(ModelBuilder mb)
+        {
             Assembly.GetExecutingAssembly().GetTypes()
                 .Where(t => t.IsClass && t.IsPublic && !t.IsAbstract && !typeof(DbContext).IsAssignableFrom(t))
                 .ToList()
                 .ForEach(t => mb.Entity(t).ToTable(t.Name));
+    
+            foreach (var entityType in mb.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(decimal) || property.ClrType == typeof(decimal?))
+                    {
+                        property.SetValueConverter(new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<decimal, double>(
+                            v => (double)v,
+                            v => (decimal)v
+                        ));
+                    }
+                }
+            }
+        }
     }
     
     
