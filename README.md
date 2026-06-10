@@ -142,3 +142,198 @@ Dodatkowo do tych zapytań można używać:
 
 ## Gramatyka formatu
 [GRAMATYKA](https://github.com/Kyrerek/KonwerterSQL2CSharp/blob/main/main/src/main/antlr/SQL.g4)
+
+## Stosowane generatory i pakiety zewnętrzne
+
+### Generator parsera
+- **ANTLR4** w wersji 4.13.1 - generator skanerów i parserów
+- Strona: https://www.antlr.org/
+- Gramatyka `SQL.g4` → automatyczne generowanie `SQLLexer` i `SQLParser` w Javie z obsługą wzorca Visitor
+
+### Pakiety zewnętrzne - Java (kompilator + UI)
+| Pakiet | Wersja | Zastosowanie |
+|--------|--------|--------------|
+| `org.antlr:antlr4` | 4.13.1 | Generator parsera (narzędzie budowania) |
+| `org.antlr:antlr4-runtime` | 4.13.1 | Runtime ANTLR4 do uruchamiania parsera |
+| `com.fifesoft:rsyntaxtextarea` | 3.3.3 | Edytor kodu z podświetlaniem składni SQL i C# w UI |
+
+### Pakiety zewnętrzne - C# (wygenerowany kod)
+| Pakiet | Wersja | Zastosowanie |
+|--------|--------|--------------|
+| `Microsoft.EntityFrameworkCore.Sqlite` | 10.0.9 | ORM + provider SQLite |
+| `EFCore.BulkExtensions` | 10.0.1 | Operacje `BulkInsert` dla INSERT |
+
+---
+
+## Instrukcja obsługi
+
+### Wymagania
+- Java 21+
+- Gradle 8+
+- .NET 10 SDK
+
+### Uruchomienie
+
+1. Sklonuj repozytorium:
+```bash
+   git clone https://github.com/Kyrerek/KonwerterSQL2CSharp
+   cd KonwerterSQL2CSharp
+```
+
+2. Uruchom aplikację:
+```bash
+   ./gradlew run
+```
+   Otworzy się okno graficzne aplikacji.
+
+### Obsługa interfejsu
+
+Aplikacja składa się z trzech sekcji:
+
+- **Wejście SQL** (lewa strona) — edytor z podświetlaniem składni SQL
+- **Wynik C#** (prawa strona) — wygenerowany kod C# z podświetlaniem składni; pole tylko do odczytu
+- **Błędy/Output** (dół) — lista błędów kompilacji SQL (na czerwono) lub wynik wykonania programu C# (na czarno)
+
+Przyciski:
+- **Generuj C#** — konwertuje zawartość edytora SQL do kodu C#
+- **Run C#** — zapisuje wygenerowany kod do pliku `Template/Program.cs` i uruchamia go przez `dotnet run`
+
+---
+
+## Przykład użycia
+### Proste przykład
+```sql
+SELECT * FROM T;
+```
+### Przykład 1
+```sql
+CREATE TABLE Users (
+    Id INT PRIMARY KEY,
+    Name VARCHAR(50) NOT NULL,
+    Age INT NOT NULL
+);
+
+CREATE TABLE Orders (
+    Id INT PRIMARY KEY,
+    Product VARCHAR(100) NOT NULL,
+    Price DECIMAL NOT NULL,
+    UserId INT REFERENCES Users(Id)
+);
+
+INSERT INTO Users (Id, Name, Age) VALUES (1, 'Anna', 25);
+INSERT INTO Users (Id, Name, Age) VALUES (2, 'Jan', 30);
+
+INSERT INTO Orders (Id, Product, Price, UserId) VALUES (102, 'Telefon', 1500, 2);
+INSERT INTO Orders (Id, Product, Price, UserId) VALUES (101, 'Laptop', 3500, 1);
+
+SELECT u.Name, o.Product
+FROM Users AS u
+JOIN Orders AS o ON u.Id = o.UserId
+WHERE u.Age > 20
+ORDER BY o.Price DESC;
+
+UPDATE Users SET Age = 26 WHERE Id = 1;
+
+DELETE FROM Orders WHERE UserId = 1;
+```
+### Przykład 2
+```sql
+    CREATE TABLE Categories (
+    Id INT PRIMARY KEY,
+    Name VARCHAR(50) NOT NULL,
+    Description VARCHAR(200)
+);
+
+CREATE TABLE Products (
+    Id INT PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL,
+    Price DECIMAL NOT NULL,
+    Stock INT NOT NULL DEFAULT 0,
+    CategoryId INT REFERENCES Categories(Id)
+);
+
+CREATE TABLE Customers (
+    Id INT PRIMARY KEY,
+    FirstName VARCHAR(50) NOT NULL,
+    LastName VARCHAR(50) NOT NULL,
+    Email VARCHAR(100) NOT NULL UNIQUE,
+    Age INT
+);
+
+CREATE TABLE Orders (
+    Id INT PRIMARY KEY,
+    Quantity INT NOT NULL,
+    TotalPrice DECIMAL NOT NULL,
+    CustomerId INT REFERENCES Customers(Id),
+    ProductId INT REFERENCES Products(Id)
+);
+
+INSERT INTO Categories (Id, Name, Description) VALUES (1, 'Elektronika', 'Sprzet elektroniczny');
+INSERT INTO Categories (Id, Name, Description) VALUES (2, 'Ksiazki', 'Literatura i podreczniki');
+INSERT INTO Categories (Id, Name, Description) VALUES (3, 'Odziez', 'Ubrania i akcesoria');
+
+INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (1, 'Laptop', 3500, 10, 1);
+INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (2, 'Telefon', 1500, 25, 1);
+INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (3, 'Java Book', 89, 100, 2);
+INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (4, 'T-Shirt', 49, 200, 3);
+INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (5, 'Headphones', 299, 50, 1);
+
+INSERT INTO Customers (Id, FirstName, LastName, Email, Age) VALUES (1, 'Anna', 'Kowalska', 'anna@mail.com', 25);
+INSERT INTO Customers (Id, FirstName, LastName, Email, Age) VALUES (2, 'Jan', 'Nowak', 'jan@mail.com', 30);
+INSERT INTO Customers (Id, FirstName, LastName, Email, Age) VALUES (3, 'Maria', 'Wisniewska', 'maria@mail.com', 22);
+INSERT INTO Customers (Id, FirstName, LastName, Email, Age) VALUES (4, 'Piotr', 'Zielinski', 'piotr@mail.com', 35);
+
+INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (1, 1, 3500, 1, 1);
+INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (2, 2, 3000, 2, 2);
+INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (3, 1, 89, 1, 3);
+INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (4, 3, 147, 3, 4);
+INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (5, 1, 299, 4, 5);
+INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (6, 2, 178, 2, 3);
+
+SELECT * FROM Customers WHERE Age > 25;
+
+SELECT c.FirstName, c.LastName, c.Email FROM Customers AS c WHERE c.Age > 24;
+
+SELECT * FROM Products ORDER BY Price ASC;
+
+SELECT * FROM Products ORDER BY Price DESC;
+
+SELECT * FROM Products ORDER BY CategoryId ASC, Price DESC;
+
+SELECT c.FirstName, o.TotalPrice FROM Customers AS c JOIN Orders AS o ON c.Id = o.CustomerId;
+
+SELECT c.FirstName, p.Name, o.Quantity FROM Customers AS c JOIN Orders AS o ON c.Id = o.CustomerId JOIN Products AS p ON o.ProductId = p.Id;
+
+SELECT c.FirstName, o.TotalPrice FROM Customers AS c LEFT JOIN Orders AS o ON c.Id = o.CustomerId;
+
+SELECT o.TotalPrice, p.Name FROM Orders AS o RIGHT JOIN Products AS p ON o.ProductId = p.Id;
+
+SELECT c.FirstName, o.TotalPrice FROM Customers AS c JOIN Orders AS o ON c.Id = o.CustomerId ORDER BY o.TotalPrice DESC;
+
+SELECT o.CustomerId, COUNT(o.Id) FROM Orders AS o GROUP BY o.CustomerId;
+
+SELECT o.CustomerId, SUM(o.TotalPrice) FROM Orders AS o GROUP BY o.CustomerId;
+
+SELECT o.ProductId, AVG(o.TotalPrice) FROM Orders AS o GROUP BY o.ProductId;
+
+SELECT o.ProductId, MIN(o.TotalPrice), MAX(o.TotalPrice) FROM Orders AS o GROUP BY o.ProductId;
+
+SELECT o.CustomerId, SUM(o.TotalPrice) FROM Orders AS o GROUP BY o.CustomerId HAVING SUM(o.TotalPrice) > 500;
+
+SELECT c.FirstName AS Imie, c.LastName AS Nazwisko FROM Customers AS c;
+
+SELECT DISTINCT CustomerId FROM Orders;
+
+UPDATE Products SET Stock = 5 WHERE Id = 1;
+
+UPDATE Customers SET Age = 26 WHERE Id = 1;
+
+DELETE FROM Orders WHERE CustomerId = 3;
+
+SELECT * FROM Orders;
+
+DELETE FROM Customers WHERE Id = 3;
+
+SELECT * FROM Customers;
+
+```
