@@ -535,15 +535,33 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         var idStr = ctx.into_stm().ID().getText();
         var parStr = new ArrayList<String>();
         var cols = ctx.into_stm().into_bracket_list();
+        var warnErr = new ArrayList<String>();
+
+        if (!tablesAndColumns.containsKey(idStr)) {
+            errors.add("WARNING: Tabela o nazwie \""+idStr+"\" nie została określona przed linią "+ctx.start.getLine()+". Zalecane jest pierw jej stworzenie.");
+            warnErr.add("/* WARNING: Tabela o nazwie \""+idStr+"\" nie została jeszcze określona! */");
+        }
+
         if (cols != null) {
             for (var id: ctx.into_stm().into_bracket_list().ID()){
-                parStr.add(id.getText());
+                String colTest = id.getText();
+                parStr.add(colTest);
+                Token columnToken = id.getSymbol();
+                if (tablesAndColumns.containsKey(idStr) && !tablesAndColumns.get(idStr).contains(colTest)){
+                    errors.add("ERROR: Błąd w linii "+columnToken.getLine()+":"+columnToken.getCharPositionInLine()+". Kolumna \""+colTest+"\" nie istnieje w tabeli \""+idStr+"\"!");
+                    warnErr.add("/* ERROR: Błąd w linii "+columnToken.getLine()+":"+columnToken.getCharPositionInLine()+". Kolumna \""+colTest+"\" nie istnieje w tabeli \""+idStr+"\"! */");
+                }
             }
         }else{
             if (tablesAndColumns.containsKey(idStr)){
                 parStr.addAll(tablesAndColumns.get(idStr));
             }
         }
+
+        if (!warnErr.isEmpty()){
+            return String.join("\n", warnErr);
+        }
+
         csharp.append("db.BulkInsert(new ").append(idStr).append("[] {");
         var val_ll = ctx.values_stm().values_list().values_item();
         for (int i=0; i<val_ll.size() - 1; i++){
