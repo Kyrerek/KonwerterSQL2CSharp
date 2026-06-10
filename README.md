@@ -177,7 +177,7 @@ Dodatkowo do tych zapytań można używać:
 1. Sklonuj repozytorium:
 ```bash
    git clone https://github.com/Kyrerek/KonwerterSQL2CSharp
-   cd KonwerterSQL2CSharp
+   cd KonwerterSQL2CSharp/main
 ```
 
 2. Uruchom aplikację:
