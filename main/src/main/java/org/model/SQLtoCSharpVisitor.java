@@ -179,15 +179,19 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     public String visitColumn(SQLParser.ColumnContext ctx) {
         if (ctx.PER() != null) {
             String table = ctx.ID().getFirst().getText();
+            String checkTable = table;
+            if (!tablesAliases.isEmpty() && tablesAliases.containsKey(table)){
+                checkTable = tablesAliases.get(table);
+            }
             String column = ctx.ID().get(1).getText();
-            if (!tablesAndColumns.containsKey(table) || !tablesAliases.containsKey(table)){
-                errors.add("WARNING: Tabela o nazwie \""+table+"\" nie została określona przed linią "+ctx.start.getLine()+". Zalecane jest pierw jej stworzenie.");
-                warnings.add("/* WARNING: Tabela o nazwie \""+table+"\" nie została jeszcze określona! */\n");
+            if (!tablesAndColumns.containsKey(checkTable)){
+                    errors.add("WARNING: Tabela o nazwie \""+checkTable+"\" nie została określona przed linią "+ctx.start.getLine()+". Zalecane jest pierw jej stworzenie.");
+                    warnings.add("/* WARNING: Tabela o nazwie \""+checkTable+"\" nie została jeszcze określona! */\n");
             } else {
                 Token columnToken = ctx.ID().get(1).getSymbol();
-                if (!tablesAndColumns.get(table).contains(column)){
-                    errors.add("ERROR: Błąd w linii "+columnToken.getLine()+":"+columnToken.getCharPositionInLine()+". Kolumna \""+column+"\" nie istnieje w tabeli \""+table+"\"!");
-                    stmErrors.add("/* ERROR: Błąd w linii "+columnToken.getLine()+":"+columnToken.getCharPositionInLine()+". Kolumna \""+column+"\" nie istnieje w tabeli \""+table+"\"! */");
+                if (!tablesAndColumns.get(checkTable).contains(column)){
+                    errors.add("ERROR: Błąd w linii "+columnToken.getLine()+":"+columnToken.getCharPositionInLine()+". Kolumna \""+column+"\" nie istnieje w tabeli \""+checkTable+"\"!");
+                    stmErrors.add("/* ERROR: Błąd w linii "+columnToken.getLine()+":"+columnToken.getCharPositionInLine()+". Kolumna \""+column+"\" nie istnieje w tabeli \""+checkTable+"\"! */");
                 }
             }
 
@@ -263,22 +267,22 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 tablesAliases.put(joinName, joinTable);
             }
         }
-        joinTable = wrapInDb(joinTable);
         String mainNameJoin;
 
         List<String> mainSide = new ArrayList<>();
         List<String> joinSide = new ArrayList<>();
         for (var on : ctx.join_on()) {
             String first = visit(on.column(0));
+            String second = visit(on.column(1));
             if (first.startsWith(joinName)){
                 joinSide.add(first);
-                mainSide.add(visit(on.column(1)));
+                mainSide.add(second);
             } else {
                 mainSide.add(first);
-                joinSide.add(visit(on.column(1)));
+                joinSide.add(second);
             }
         }
-
+        joinTable = wrapInDb(joinTable);
         if (tablesToJoin == 2) {
             mainNameJoin = mainName;
             prevJoins.addAll(Arrays.asList(mainNameJoin, joinName));
