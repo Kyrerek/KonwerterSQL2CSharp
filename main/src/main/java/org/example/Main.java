@@ -37,198 +37,177 @@ public class Main {
         editTxtArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
         editTxtArea.setCodeFoldingEnabled(true);
         editTxtArea.setTabSize(4);
-
-//        String sqlStr = """
-//        SELECT DISTINCT name, age FROM users WHERE (age > 18 AND age is NOT NULL) or name NOT LIKE '%_OO%' and age BETWEEN 10 AND 100;
-//        SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept;
-//        SELECT e.DeptId FROM Employees AS e JOIN Departments AS d ON e.DeptId = d.Id;
-//        SELECT e.DeptId FROM Employees AS e LEFT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;
-//        SELECT e.DeptId FROM Employees AS e RIGHT JOIN Departments AS d ON e.DeptId = d.Id AND e.City = d.City;
-//        SELECT Dept, AVG(Salary) AS average FROM Emps GROUP BY Dept ORDER BY average DESC, Dept;
-//        DELETE FROM users WHERE name LIKE '%ki%' and age NOT BETWEEN 20 AND 50;
-//        UPDATE users
-//        SET age = age * 1.10, name = 'UNKNOWN', country = NULL
-//        WHERE name LIKE '%____%';
-//        INSERT INTO Users (name,age,country,code)
-//        VALUES
-//        ('User1', 10, 'Norway'),
-//        ('Per Olsen', 20, NULL),
-//        ('Finn Egan', 50, 'Poland');
-//        SELECT a.Name, b.Price, c.Category
-//        FROM TableA AS a
-//        JOIN TableB AS b ON a.Id = b.AId
-//        JOIN TableC AS c ON b.Id = c.BId
-//        JOIN TableD AS d ON d.BId = a.Id;
-//        SELECT a.Name, b.Price, c.Category
-//        FROM TableA AS a
-//        LEFT JOIN TableB AS b ON a.Id = b.AId
-//        LEFT JOIN TableC AS c ON b.Id = c.BId
-//        LEFT JOIN TableD AS d ON d.BId = a.Id;
-//        CREATE TABLE Departments (
-//            Id INT PRIMARY KEY
-//        );
-//        CREATE TABLE Employees (
-//            Id INT PRIMARY KEY,
-//            Username VARCHAR(50) NOT NULL UNIQUE,
-//            Salary DECIMAL DEFAULT 3000.00 UNIQUE,
-//            IsActive BOOLEAN DEFAULT TRUE,
-//            DeptId INT REFERENCES Departments(Id)
-//        );
-//        """;
         String fullTest = """
     CREATE TABLE Categories (
-    Id INT PRIMARY KEY,
-    Name VARCHAR(50) NOT NULL,
-    Description VARCHAR(200)
-);
-
-CREATE TABLE Products (
-    Id INT PRIMARY KEY,
-    Name VARCHAR(100) NOT NULL,
-    Price DECIMAL NOT NULL,
-    Stock INT NOT NULL DEFAULT 0,
-    CategoryId INT REFERENCES Categories(Id)
-);
-
-CREATE TABLE Customers (
-    Id INT PRIMARY KEY,
-    FirstName VARCHAR(50) NOT NULL,
-    LastName VARCHAR(50) NOT NULL,
-    Email VARCHAR(100) NOT NULL UNIQUE,
-    Age INT
-);
-
-CREATE TABLE Orders (
-    Id INT PRIMARY KEY,
-    Quantity INT NOT NULL,
-    TotalPrice DECIMAL NOT NULL,
-    CustomerId INT REFERENCES Customers(Id),
-    ProductId INT REFERENCES Products(Id)
-);
-
-INSERT INTO Categories (Id, Name, Description) VALUES (1, 'Elektronika', 'Sprzet elektroniczny');
-INSERT INTO Categories (Id, Name, Description) VALUES (2, 'Ksiazki', 'Literatura i podreczniki');
-INSERT INTO Categories (Id, Name, Description) VALUES (3, 'Odziez', 'Ubrania i akcesoria');
-
-INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (1, 'Laptop', 3500, 10, 1);
-INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (2, 'Telefon', 1500, 25, 1);
-INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (3, 'Java Book', 89, 100, 2);
-INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (4, 'T-Shirt', 49, 200, 3);
-INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (5, 'Headphones', 299, 50, 1);
-
-INSERT INTO Customers (Id, FirstName, LastName, Email, Age) VALUES (1, 'Anna', 'Kowalska', 'anna@mail.com', 25);
-INSERT INTO Customers (Id, FirstName, LastName, Email, Age) VALUES (2, 'Jan', 'Nowak', 'jan@mail.com', 30);
-INSERT INTO Customers (Id, FirstName, LastName, Email, Age) VALUES (3, 'Maria', 'Wisniewska', 'maria@mail.com', 22);
-INSERT INTO Customers (Id, FirstName, LastName, Email, Age) VALUES (4, 'Piotr', 'Zielinski', 'piotr@mail.com', 35);
-
-INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (1, 1, 3500, 1, 1);
-INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (2, 2, 3000, 2, 2);
-INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (3, 1, 89, 1, 3);
-INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (4, 3, 147, 3, 4);
-INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (5, 1, 299, 4, 5);
-INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (6, 2, 178, 2, 3);
-
-SELECT * FROM Customers WHERE Age > 25;
-
-SELECT c.FirstName, c.LastName, c.Email FROM Customers AS c WHERE c.Age > 24;
-
-
-SELECT * FROM Products ORDER BY Price ASC;
-
-SELECT * FROM Products ORDER BY Price DESC;
-
-
-SELECT * FROM Products ORDER BY CategoryId ASC, Price DESC;
-
-
-SELECT c.FirstName, o.TotalPrice FROM Customers AS c JOIN Orders AS o ON c.Id = o.CustomerId;
-
-
-SELECT c.FirstName, p.Name, o.Quantity FROM Customers AS c JOIN Orders AS o ON c.Id = o.CustomerId JOIN Products AS p ON o.ProductId = p.Id;
-
-
-SELECT c.FirstName, o.TotalPrice FROM Customers AS c LEFT JOIN Orders AS o ON c.Id = o.CustomerId;
-
-
-SELECT o.TotalPrice, p.Name FROM Orders AS o RIGHT JOIN Products AS p ON o.ProductId = p.Id;
-
-
-SELECT c.FirstName, o.TotalPrice FROM Customers AS c JOIN Orders AS o ON c.Id = o.CustomerId ORDER BY o.TotalPrice DESC;
-
-
-SELECT o.CustomerId, COUNT(o.Id) FROM Orders AS o GROUP BY o.CustomerId;
-
-
-SELECT o.CustomerId, SUM(o.TotalPrice) FROM Orders AS o GROUP BY o.CustomerId;
-
-
-SELECT o.ProductId, AVG(o.TotalPrice) FROM Orders AS o GROUP BY o.ProductId;
-
-
-SELECT o.ProductId, MIN(o.TotalPrice), MAX(o.TotalPrice) FROM Orders AS o GROUP BY o.ProductId;
-
-
-SELECT o.CustomerId, SUM(o.TotalPrice) FROM Orders AS o GROUP BY o.CustomerId HAVING SUM(o.TotalPrice) > 500;
-
-
-SELECT c.FirstName AS Imie, c.LastName AS Nazwisko FROM Customers AS c;
-
-
-SELECT DISTINCT CustomerId FROM Orders;
-
-
-UPDATE Products SET Stock = 5 WHERE Id = 1;
-
-
-UPDATE Customers SET Age = 26 WHERE Id = 1;
-
-
-DELETE FROM Orders WHERE CustomerId = 3;
-
-
-SELECT * FROM Orders;
-
-DELETE FROM Customers WHERE Id = 3;
-
-SELECT * FROM Customers;
-
+        Id INT PRIMARY KEY,
+        Name VARCHAR(50) NOT NULL,
+        Description VARCHAR(200)
+    );
+ 
+    CREATE TABLE Products (
+        Id INT PRIMARY KEY,
+        Name VARCHAR(100) NOT NULL,
+        Price DECIMAL NOT NULL,
+        Stock INT NOT NULL DEFAULT 0,
+        CategoryId INT REFERENCES Categories(Id)
+    );
+ 
+    CREATE TABLE Customers (
+        Id INT PRIMARY KEY,
+        FirstName VARCHAR(50) NOT NULL,
+        LastName VARCHAR(50) NOT NULL,
+        Email VARCHAR(100) NOT NULL UNIQUE,
+        Age INT
+    );
+ 
+    CREATE TABLE Orders (
+        Id INT PRIMARY KEY,
+        Quantity INT NOT NULL,
+        TotalPrice DECIMAL NOT NULL,
+        CustomerId INT REFERENCES Customers(Id),
+        ProductId INT REFERENCES Products(Id)
+    );
+ 
+    INSERT INTO Categories (Id, Name, Description) VALUES (1, 'Elektronika', 'Sprzet elektroniczny');
+    INSERT INTO Categories (Id, Name, Description) VALUES (2, 'Ksiazki', 'Literatura i podreczniki');
+    INSERT INTO Categories (Id, Name, Description) VALUES (3, 'Odziez', 'Ubrania i akcesoria');
+ 
+    INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (1, 'Laptop', 3500, 10, 1);
+    INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (2, 'Telefon', 1500, 25, 1);
+    INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (3, 'Java Book', 89, 100, 2);
+    INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (4, 'T-Shirt', 49, 200, 3);
+    INSERT INTO Products (Id, Name, Price, Stock, CategoryId) VALUES (5, 'Headphones', 299, 50, 1);
+ 
+    INSERT INTO Customers (Id, FirstName, LastName, Email, Age) VALUES (1, 'Anna', 'Kowalska', 'anna@mail.com', 25);
+    INSERT INTO Customers (Id, FirstName, LastName, Email, Age) VALUES (2, 'Jan', 'Nowak', 'jan@mail.com', 30);
+    INSERT INTO Customers (Id, FirstName, LastName, Email, Age) VALUES (3, 'Maria', 'Wisniewska', 'maria@mail.com', 22);
+    INSERT INTO Customers (Id, FirstName, LastName, Email, Age) VALUES (4, 'Piotr', 'Zielinski', 'piotr@mail.com', 35);
+ 
+    INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (1, 1, 3500, 1, 1);
+    INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (2, 2, 3000, 2, 2);
+    INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (3, 1, 89, 1, 3);
+    INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (4, 3, 147, 3, 4);
+    INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (5, 1, 299, 4, 5);
+    INSERT INTO Orders (Id, Quantity, TotalPrice, CustomerId, ProductId) VALUES (6, 2, 178, 2, 3);
+ 
+    SELECT * FROM Customers WHERE Age > 25;
+ 
+    SELECT c.FirstName, c.LastName, c.Email FROM Customers AS c WHERE c.Age > 24;
+ 
+    SELECT * FROM Products ORDER BY Price ASC;
+ 
+    SELECT * FROM Products ORDER BY Price DESC;
+ 
+    SELECT * FROM Products ORDER BY CategoryId ASC, Price DESC;
+ 
+    SELECT c.FirstName, o.TotalPrice FROM Customers AS c JOIN Orders AS o ON c.Id = o.CustomerId;
+ 
+    SELECT c.FirstName, p.Name, o.Quantity FROM Customers AS c JOIN Orders AS o ON c.Id = o.CustomerId JOIN Products AS p ON o.ProductId = p.Id;
+ 
+    SELECT c.FirstName, o.TotalPrice FROM Customers AS c LEFT JOIN Orders AS o ON c.Id = o.CustomerId;
+ 
+    SELECT o.TotalPrice, p.Name FROM Orders AS o RIGHT JOIN Products AS p ON o.ProductId = p.Id;
+ 
+    SELECT c.FirstName, o.TotalPrice FROM Customers AS c JOIN Orders AS o ON c.Id = o.CustomerId ORDER BY o.TotalPrice DESC;
+ 
+    SELECT o.CustomerId, COUNT(o.Id) FROM Orders AS o GROUP BY o.CustomerId;
+ 
+    SELECT o.CustomerId, SUM(o.TotalPrice) FROM Orders AS o GROUP BY o.CustomerId;
+ 
+    SELECT o.ProductId, AVG(o.TotalPrice) FROM Orders AS o GROUP BY o.ProductId;
+ 
+    SELECT o.ProductId, MIN(o.TotalPrice), MAX(o.TotalPrice) FROM Orders AS o GROUP BY o.ProductId;
+ 
+    SELECT o.CustomerId, SUM(o.TotalPrice) FROM Orders AS o GROUP BY o.CustomerId HAVING SUM(o.TotalPrice) > 500;
+ 
+    SELECT c.FirstName AS Imie, c.LastName AS Nazwisko FROM Customers AS c;
+ 
+    SELECT DISTINCT CustomerId FROM Orders;
+ 
+    UPDATE Products SET Stock = 5 WHERE Id = 1;
+ 
+    UPDATE Customers SET Age = 26 WHERE Id = 1;
+ 
+    DELETE FROM Orders WHERE CustomerId = 3;
+ 
+    SELECT * FROM Orders;
+ 
+    DELETE FROM Customers WHERE Id = 3;
+ 
+    SELECT * FROM Customers;
                 """;
-//        String sqlStr = """
-//                CREATE TABLE Users (
-//                    Id INT PRIMARY KEY,
-//                    Name VARCHAR(50) NOT NULL,
-//                    Age INT NOT NULL
-//                );
-//
-//                CREATE TABLE Orders (
-//                    Id INT PRIMARY KEY,
-//                    Product VARCHAR(100) NOT NULL,
-//                    Price DECIMAL NOT NULL,
-//                    UserId INT REFERENCES Users(Id)
-//                );
-//
-//                INSERT INTO Users (Id, Name, Age) VALUES (1, 'Anna', 25);
-//                INSERT INTO Users VALUES (2, 'Jan', 30);
-//
-//                INSERT INTO Orders (Id, Product, Price, UserId) VALUES (101, 'Laptop', 3500, 1);
-//                INSERT INTO Orders (Id, Product, Price, UserId) VALUES (102, 'Telefon', 1500, 2);
-//
-//                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId WHERE o.Price > 2000;
-//
-//                SELECT DISTINCT UserId FROM Orders;
-//
-//                SELECT u.Id FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId ORDER by u.Age DESc;
-//
-//                UPDATE Users SET Age = 26 WHERE Id = 1;
-//
-//                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId;
-//
-//                DELETE FROM Orders WHERE UserId = 2;
-//                DELETE FROM Users WHERE Id = 2;
-//
-//                SELECT * FROM Users AS u JOIN Orders AS o ON u.Id = o.UserId;
-//                """;
-        editTxtArea.setText(fullTest);
+        String errorCreateTest = """
+            CREATE TABLE Users (
+                Id INT PRIMARY KEY,
+                Name VARCHAR(50) NOT NULL,
+                Age INT NOT NULL
+            );
+
+            CREATE TABLE Users (
+                Id INT PRIMARY KEY,
+                Email VARCHAR(100)
+            );
+
+            CREATE TABLE Orders (
+                Id INT PRIMARY KEY,
+                Id VARCHAR(50) NOT NULL,
+                Amount DECIMAL PRIMARY KEY,
+                UserId INT REFERENCES Payments(Id),
+                Stock INT DEFAULT 'hello'
+            );
+            """;
+
+        String errorSelectTest = """
+            CREATE TABLE Customers (
+                Id INT PRIMARY KEY,
+                FirstName VARCHAR(50) NOT NULL,
+                LastName VARCHAR(50) NOT NULL,
+                Age INT
+            );
+
+            CREATE TABLE Orders (
+                Id INT PRIMARY KEY,
+                TotalPrice DECIMAL NOT NULL,
+                CustomerId INT REFERENCES Customers(Id)
+            );
+
+            SELECT c.NonExistent FROM Customers AS c;
+
+            SELECT c.FirstName AS Imie, c.LastName AS Imie FROM Customers AS c;
+
+            SELECT c.FirstName, c.LastName, SUM(o.TotalPrice)
+            FROM Customers AS c
+            JOIN Orders AS o ON c.Id = o.CustomerId
+            GROUP BY c.FirstName;
+
+            SELECT * FROM NonExistentTable;
+            """;
+
+        String errorMixedTest = """
+            CREATE TABLE Categories (
+                Id INT PRIMARY KEY,
+                Name VARCHAR(50) NOT NULL
+            );
+
+            CREATE TABLE Products (
+                Id INT PRIMARY KEY,
+                Name VARCHAR(100) NOT NULL,
+                CategoryId INT REFERENCES Categories(NonExistentColumn)
+            );
+
+            INSERT INTO Categories (Id, Name) VALUES (1, 'Elektronika');
+            INSERT INTO Products (Id, Name, CategoryId) VALUES (1, 'Laptop', 1);
+
+            SELECT p.Name, c.Name
+            FROM Products AS p
+            JOIN Categories AS c ON p.CategoryId = c.Id
+            JOIN Categories AS c ON p.CategoryId = c.Id;
+            """;
+
+//        editTxtArea.setText(fullTest);
+//        editTxtArea.setText(errorCreateTest);
+//        editTxtArea.setText(errorSelectTest);
+//        editTxtArea.setText(errorMixedTest);
 
         RTextScrollPane editScrollP = new RTextScrollPane(editTxtArea);
 
@@ -252,11 +231,12 @@ SELECT * FROM Customers;
         errorOrOutArea.setEditable(false);
         errorOrOutArea.setForeground(Color.RED);
         errorOrOutArea.setTabSize(4);
+        errorOrOutArea.setFont(errorOrOutArea.getFont().deriveFont(13f));
 
         RTextScrollPane errorScrollP = new RTextScrollPane(errorOrOutArea);
 
         JPanel errorPanel = new JPanel(new BorderLayout(0, 4));
-        errorPanel.setPreferredSize(new Dimension(0, 150));
+        errorPanel.setPreferredSize(new Dimension(0, 220));
         errorPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         errorPanel.add(new JLabel("Błędy/Output"), BorderLayout.NORTH);
         errorPanel.add(errorScrollP, BorderLayout.CENTER);
@@ -280,28 +260,12 @@ SELECT * FROM Customers;
             try {
                 errorOrOutArea.setForeground(Color.BLACK);
                 errorOrOutArea.setText(runCreateCSharp(textArea.getText()));
-            }catch (Exception ex){
+            } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
         });
 
-        JPanel topPanel = new JPanel(new BorderLayout(20, 0));
-        topPanel.add(sqlPanel, BorderLayout.WEST);
-
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
-        buttonPanel.add(Box.createVerticalGlue());
-        buttonPanel.add(button);
-        buttonPanel.add(Box.createVerticalStrut(20));
-        buttonPanel.add(runButton);
-        buttonPanel.add(Box.createVerticalGlue());
-        topPanel.add(buttonPanel, BorderLayout.CENTER);
-
-        topPanel.add(csPanel, BorderLayout.EAST);
-
-        sqlPanel.setPreferredSize(new Dimension(0, 0));
-        csPanel.setPreferredSize(new Dimension(0, 0));
-        topPanel.setLayout(new GridBagLayout());
+        JPanel topPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weighty = 1.0;
@@ -310,6 +274,14 @@ SELECT * FROM Customers;
         gbc.gridx = 0;
         gbc.weightx = 0.45;
         topPanel.add(sqlPanel, gbc);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
+        buttonPanel.add(Box.createVerticalGlue());
+        buttonPanel.add(button);
+        buttonPanel.add(Box.createVerticalStrut(20));
+        buttonPanel.add(runButton);
+        buttonPanel.add(Box.createVerticalGlue());
 
         gbc.gridx = 1;
         gbc.weightx = 0.1;
