@@ -804,8 +804,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
                 .append(ctx.ID())
                 .append(" {get; set;}");
         if (defaultVal != null){
-            builder.append(" = ")
-                    .append(defaultVal);
+            builder.append(" = ").append(defaultVal);
             if (type.contains("decimal")){
                 builder.append("m");
             }
@@ -820,6 +819,7 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
             lastKey = key;
         }
         tablesAndColumns.get(lastKey).add(ctx.ID().getText());
+
         return builder.append('\n').toString();
     }
 
