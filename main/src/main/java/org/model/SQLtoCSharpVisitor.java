@@ -744,8 +744,10 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
     }
 
     private List<String> uniqueList;
+    private boolean hasPrimary;
     @Override
     public String visitCreate_stm(SQLParser.Create_stmContext ctx){
+        hasPrimary = false;
         stmErrors = new ArrayList<>();
         String tableName = ctx.ID().toString();
         Token tableToken = ctx.ID().getSymbol();
@@ -797,14 +799,19 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         return ContraintType.REF;
     }
 
+    private boolean hasUnique;
+    private boolean hasNull;
     @Override
     public String visitCreate_element(SQLParser.Create_elementContext ctx){
+        hasUnique = false;
+        hasNull = false;
+
         String lastKey = null;
+        Token colToken = ctx.ID().getSymbol();
         for (var key : tablesAndColumns.keySet()){
             lastKey = key;
         }
         if (tablesAndColumns.get(lastKey).contains(ctx.ID().getText())){
-            Token colToken = ctx.ID().getSymbol();
             errors.add("ERROR: Błąd w linii "+colToken.getLine()+":"+colToken.getCharPositionInLine()+". Tabela \""+lastKey+"\" ma już kolumne \""+ctx.ID().getText()+"\"!");
             stmErrors.add("/* ERROR: Błąd w linii "+colToken.getLine()+":"+colToken.getCharPositionInLine()+". Tabela \""+lastKey+"\" ma już kolumne \""+ctx.ID().getText()+"\"! */");
         }
@@ -816,36 +823,69 @@ public class SQLtoCSharpVisitor extends antlr.SQLBaseVisitor<String> {
         boolean required = false;
         String fk = null;
         for (var c : ctx.contraint()){
+            Token cToken = c.start;
             switch (detectConstraintType(c)){
-                case ContraintType.UNIQUE -> uniqueList.add(ctx.ID().toString());
+                case ContraintType.UNIQUE ->{
+                    if (hasUnique) {
+                        errors.add("ERROR: Błąd w linii "+cToken.getLine()+":"+cToken.getCharPositionInLine()+". Kolumna \""+ctx.ID()+"\" próbuje zdefiniować wiele ograniczeń UNIQUE!");
+                        stmErrors.add("/* ERROR: Błąd w linii "+cToken.getLine()+":"+cToken.getCharPositionInLine()+". Kolumna \""+ctx.ID()+"\" próbuje zdefiniować wiele ograniczeń UNIQUE! */");
+                    } else {
+                        uniqueList.add(ctx.ID().toString());
+                        hasUnique = true;
+                    }
+                }
                 case ContraintType.NOTNULL -> {
-                    isNullable = false;
-                    required = true;
-                }
-                case ContraintType.PRIMARY -> {
-                    builder.append("\n\t[Key]");
-                    isNullable = false;
-                }
-                case ContraintType.DEFAULT -> defaultVal = visit(c.value());
-                case ContraintType.REF -> {
-                    String refTable = c.ID(0).toString();
-                    Token refToken = c.ID(0).getSymbol();
-                    String refCol = c.ID(1).getText();
-                    Token refColToken = c.ID(1).getSymbol();
-                    if (!tablesAndColumns.containsKey(refTable)){
-                        errors.add("ERROR: Błąd w linii "+refToken.getLine()+":"+refToken.getCharPositionInLine()+". Tabela \""+refTable+"\" nie istnieje, więc nie można się do niej odwołać!");
-                        stmErrors.add("/* ERROR: Błąd w linii "+refToken.getLine()+":"+refToken.getCharPositionInLine()+". Tabela \""+refTable+"\" nie istnieje, więc nie można się do niej odwołać! */");
-                    } else if (!tablesAndColumns.get(refTable).contains(refCol)){
-                        System.out.println(tablesAndColumns);
-                        errors.add("ERROR: Błąd w linii "+refColToken.getLine()+":"+refColToken.getCharPositionInLine()+". Kolumna \""+refCol+"\" nie istnieje w tabeli \""+refTable+"\"!");
-                        stmErrors.add("/* ERROR: Błąd w linii "+refColToken.getLine()+":"+refColToken.getCharPositionInLine()+". Kolumna \""+refCol+"\" nie istnieje w tabeli \""+refTable+"\"! */");
+                    if (hasNull) {
+                        errors.add("ERROR: Błąd w linii "+cToken.getLine()+":"+cToken.getCharPositionInLine()+". Kolumna \""+ctx.ID()+"\" próbuje zdefiniować wiele ograniczeń NOT NULL!");
+                        stmErrors.add("/* ERROR: Błąd w linii "+cToken.getLine()+":"+cToken.getCharPositionInLine()+". Kolumna \""+ctx.ID()+"\" próbuje zdefiniować wiele ograniczeń NOT NULL! */");
+                    } else {
+                        isNullable = false;
+                        required = true;
+                        hasNull = true;
                     }
 
-                    fk = """ 
+                }
+                case ContraintType.PRIMARY -> {
+                    if (hasPrimary) {
+                        errors.add("ERROR: Błąd w linii "+colToken.getLine()+":"+colToken.getCharPositionInLine()+". Tabela \""+lastKey+"\" próbuje zdefiniować wiele kluczy głównych!");
+                        stmErrors.add("/* ERROR: Błąd w linii "+colToken.getLine()+":"+colToken.getCharPositionInLine()+". Tabela \""+lastKey+"\" próbuje zdefiniować wiele kluczy głównych! */");
+                    } else{
+                        builder.append("\n\t[Key]");
+                        isNullable = false;
+                        hasPrimary = true;
+                    }
+                }
+                case ContraintType.DEFAULT -> {
+                    if (defaultVal != null) {
+                        errors.add("ERROR: Błąd w linii "+cToken.getLine()+":"+cToken.getCharPositionInLine()+". Kolumna \""+ctx.ID()+"\" próbuje zdefiniować wiele ograniczeń DEFAULT!");
+                        stmErrors.add("/* ERROR: Błąd w linii "+cToken.getLine()+":"+cToken.getCharPositionInLine()+". Kolumna \""+ctx.ID()+"\" próbuje zdefiniować wiele ograniczeń DEFAULT! */");
+                    } else {
+                        defaultVal = visit(c.value());
+                    }
+                }
+                case ContraintType.REF -> {
+                    if (fk != null) {
+                        errors.add("ERROR: Błąd w linii "+cToken.getLine()+":"+cToken.getCharPositionInLine()+". Kolumna \""+ctx.ID()+"\" próbuje zdefiniować wiele kluczy obcych!");
+                        stmErrors.add("/* ERROR: Błąd w linii "+cToken.getLine()+":"+cToken.getCharPositionInLine()+". Kolumna \""+ctx.ID()+"\" próbuje zdefiniować wiele kluczy obcych! */");
+                    } else {
+                        String refTable = c.ID(0).toString();
+                        Token refToken = c.ID(0).getSymbol();
+                        String refCol = c.ID(1).getText();
+                        Token refColToken = c.ID(1).getSymbol();
+                        if (!tablesAndColumns.containsKey(refTable)){
+                            errors.add("ERROR: Błąd w linii "+refToken.getLine()+":"+refToken.getCharPositionInLine()+". Tabela \""+refTable+"\" nie istnieje, więc nie można się do niej odwołać!");
+                            stmErrors.add("/* ERROR: Błąd w linii "+refToken.getLine()+":"+refToken.getCharPositionInLine()+". Tabela \""+refTable+"\" nie istnieje, więc nie można się do niej odwołać! */");
+                        } else if (!tablesAndColumns.get(refTable).contains(refCol)){
+                            errors.add("ERROR: Błąd w linii "+refColToken.getLine()+":"+refColToken.getCharPositionInLine()+". Kolumna \""+refCol+"\" nie istnieje w tabeli \""+refTable+"\"!");
+                            stmErrors.add("/* ERROR: Błąd w linii "+refColToken.getLine()+":"+refColToken.getCharPositionInLine()+". Kolumna \""+refCol+"\" nie istnieje w tabeli \""+refTable+"\"! */");
+                        }
+
+                        fk = """ 
                         
                         \t[ForeignKey(nameof(%s))]
                         \tpublic virtual %s? %sFK {get; set;}
                         """.formatted(ctx.ID(), c.ID(0), c.ID(0));
+                    }
                 }
             }
         }
