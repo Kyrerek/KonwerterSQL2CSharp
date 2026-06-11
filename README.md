@@ -201,7 +201,7 @@ Przyciski:
 ---
 
 ## Przykład użycia
-### Proste przykład
+### Prosty przykład
 ```sql
 SELECT * FROM T;
 ```
@@ -235,6 +235,201 @@ ORDER BY o.Price DESC;
 UPDATE Users SET Age = 26 WHERE Id = 1;
 
 DELETE FROM Orders WHERE UserId = 1;
+```
+#### Przykładowe wyjście
+```csharp
+using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Reflection;
+using System.Globalization;
+
+using var db = new Baza();
+db.Database.OpenConnection();
+db.Database.EnsureCreated();
+
+db.AddRange(new Users[] {
+	new Users { Id = 1, Name = "Anna", Age = 25 }
+});
+db.SaveChanges();
+
+db.AddRange(new Users[] {
+	new Users { Id = 2, Name = "Jan", Age = 30 }
+});
+db.SaveChanges();
+
+db.AddRange(new Orders[] {
+	new Orders { Id = 102, Product = "Telefon", Price = 1500, UserId = 2 }
+});
+db.SaveChanges();
+
+db.AddRange(new Orders[] {
+	new Orders { Id = 101, Product = "Laptop", Price = 3500, UserId = 1 }
+});
+db.SaveChanges();
+
+db.Set<Users>()
+	.Join(
+		db.Set<Orders>(),
+		u => u.Id,
+		o => o.UserId,
+		(u, o) => new {u, o}
+	)
+	.Where(temp => temp.u.Age>20)
+	.OrderByDescending(temp => temp.o.Price)
+	.Select(temp => new {temp.u.Name, temp.o.Product}).Show();
+
+db.Set<Users>()
+	.Where(temp => temp.Id==1)
+	.ExecuteUpdate(setters => setters
+		.SetProperty(temp => temp.Age, 26)
+	);
+
+db.Set<Orders>()
+	.Where(temp => temp.UserId==1)
+	.ExecuteDelete();
+
+public class Users
+{
+	[Key]
+	public int Id {get; set;}
+
+	public required string Name {get; set;}
+
+	public required int Age {get; set;}
+}
+
+public class Orders
+{
+	[Key]
+	public int Id {get; set;}
+
+	public required string Product {get; set;}
+
+	public required decimal Price {get; set;}
+
+	public int? UserId {get; set;}
+
+	[ForeignKey(nameof(UserId))]
+	public virtual Users? UsersFK {get; set;}
+
+}
+
+class Baza : DbContext
+{
+    private static Microsoft.Data.Sqlite.SqliteConnection? _connection;
+
+    protected override void OnConfiguring(DbContextOptionsBuilder o)
+    {
+        if (_connection == null)
+        {
+            _connection = new Microsoft.Data.Sqlite.SqliteConnection("Data Source=:memory:");
+            _connection.Open();
+        }
+        o.UseSqlite(_connection);
+    }
+
+    protected override void OnModelCreating(ModelBuilder mb)
+    {
+        Assembly.GetExecutingAssembly().GetTypes()
+            .Where(t => t.IsClass && t.IsPublic && !t.IsAbstract && !typeof(DbContext).IsAssignableFrom(t))
+            .ToList()
+            .ForEach(t => mb.Entity(t).ToTable(t.Name));
+
+        foreach (var entityType in mb.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(decimal) || property.ClrType == typeof(decimal?))
+                {
+                    property.SetValueConverter(new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<decimal, double>(
+                        v => (double)v,
+                        v => (decimal)v
+                    ));
+                }
+            }
+        }
+    }
+}
+
+
+public static class ShowExtensions
+{
+    public static void Show<T>(this IQueryable<T> query)
+    {
+        List<T> dane;
+        if (typeof(T).IsClass && typeof(T) != typeof(string))
+        {
+            dane = EntityFrameworkQueryableExtensions.AsNoTracking((IQueryable<object>)query).Cast<T>().ToList();
+        }
+        else
+        {
+            dane = query.ToList();
+        }
+
+        Console.WriteLine($"\n--- WYNIK ZAPYTANIA (Rekordów: {dane.Count}) ---");
+
+        var mainType = typeof(T);
+
+        if (mainType.IsPrimitive || mainType == typeof(string) || mainType == typeof(decimal) || 
+            (Nullable.GetUnderlyingType(mainType)?.IsPrimitive == true))
+        {
+            foreach (var element in dane)
+            {
+                if (element == null) continue;
+
+                var formattedVal = element is IFormattable formattable
+                    ? formattable.ToString(null, CultureInfo.InvariantCulture)
+                    : element.ToString();
+
+                Console.WriteLine(formattedVal);
+            }
+        }
+        else
+        {
+            var properties = mainType.GetProperties();
+
+            foreach (var element in dane)
+            {
+                var kolumny = new List<string>();
+
+                foreach (var p in properties)
+                {
+                    var val = p.GetValue(element);
+                    if (val == null) continue;
+
+                    var type = val.GetType();
+
+                    if (type.IsClass && type != typeof(string))
+                    {
+                        var subProps = type.GetProperties()
+                            .Where(sp => sp.PropertyType.IsPrimitive || sp.PropertyType == typeof(string) || sp.PropertyType == typeof(decimal));
+
+                        foreach (var sp in subProps)
+                        {
+                            var subVal = sp.GetValue(val);
+                            var formattedSubVal = subVal is IFormattable formattableSub
+                                ? formattableSub.ToString(null, CultureInfo.InvariantCulture)
+                                : subVal?.ToString();
+
+                            kolumny.Add($"{sp.Name}: {formattedSubVal}");
+                        }
+                    }
+                    else
+                    {
+                        var formattedVal = val is IFormattable formattable
+                            ? formattable.ToString(null, CultureInfo.InvariantCulture)
+                            : val.ToString();
+
+                        kolumny.Add($"{p.Name}: {formattedVal}");
+                    }
+                }
+                Console.WriteLine(string.Join(", ", kolumny));
+            }
+        }
+    }
+}
+
 ```
 ### Przykład 2
 ```sql
